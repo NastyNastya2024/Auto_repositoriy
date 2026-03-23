@@ -1,9 +1,27 @@
 import type { Booking, Slot, User } from '../types';
 
-/** Первый видимый час (включительно) */
-export const GRID_HOUR_START = 7;
-/** Последний видимый час начала слота (например 22 = до 23:00) */
+/** Сетка календаря: с 11:00 до 22:00 (последний слот 20:00–21:30) */
+export const GRID_HOUR_START = 11;
+/** Последняя метка часа на оси (включительно) */
 export const GRID_HOUR_END = 22;
+
+/** Авто-слоты: 1,5 ч, первая начало 11:00, последнее окончание 21:30 */
+export const TEMPLATE_SLOT_DURATION_MIN = 90;
+
+export function getTemplateSlotStartsForDay(day: Date): Date[] {
+  const out: Date[] = [];
+  let t = new Date(day);
+  t.setHours(11, 0, 0, 0);
+  const limit = new Date(day);
+  limit.setHours(21, 30, 0, 0);
+  while (true) {
+    const tEnd = new Date(t.getTime() + TEMPLATE_SLOT_DURATION_MIN * 60_000);
+    if (tEnd.getTime() > limit.getTime()) break;
+    out.push(new Date(t));
+    t = tEnd;
+  }
+  return out;
+}
 
 export const HOUR_ROW_PX = 44;
 
@@ -42,6 +60,12 @@ export function isSameCalendarDay(a: Date, b: Date): boolean {
 
 export function getSlotEnd(startIso: string, durationMin: number): Date {
   return new Date(new Date(startIso).getTime() + durationMin * 60_000);
+}
+
+export function slotOverlapsTimeRange(slot: Slot, rangeStart: Date, rangeEnd: Date): boolean {
+  const s = new Date(slot.startIso).getTime();
+  const e = getSlotEnd(slot.startIso, slot.durationMin).getTime();
+  return s < rangeEnd.getTime() && e > rangeStart.getTime();
 }
 
 /** Визуальная позиция слота внутри колонки дня (в пикселях) или null */

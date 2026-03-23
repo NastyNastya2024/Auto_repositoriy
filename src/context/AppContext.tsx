@@ -12,6 +12,7 @@ import type {
   AppState,
   BookingStatus,
   Role,
+  Slot,
   SlotStatus,
   Tariff,
   TariffType,
@@ -19,6 +20,13 @@ import type {
 } from '../types';
 import { normalizeLogin } from '../utils/auth';
 import { createId } from '../utils/id';
+import {
+  TEMPLATE_SLOT_DURATION_MIN,
+  getTemplateSlotStartsForDay,
+  getWeekDayDates,
+  slotOverlapsTimeRange,
+  startOfWeekMonday,
+} from '../utils/weekCalendar';
 
 type AppContextValue = {
   ready: boolean;
@@ -58,6 +66,8 @@ type AppContextValue = {
   sendMessage: (text: string, studentId?: string) => void;
   mockPayTariff: (tariffId: string) => void;
   savePddResult: (correct: number, total: number) => void;
+  /** Создать недостающие свободные слоты 11:00–21:30 (90 мин) на выбранной неделе */
+  ensureFreeTemplateSlotsForWeek: (weekStartMonday: Date) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -197,6 +207,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       status: 'blocked' as const,
     };
     setState((s) => ({ ...s, slots: [...s.slots, slot] }));
+  }, []);
+
+  const ensureFreeTemplateSlotsForWeek = useCallback((weekStartMonday: Date) => {
+    const ws = startOfWeekMonday(new Date(weekStartMonday));
+    const days = getWeekDayDates(ws);
+    setState((s) => {
+      const toAdd: Slot[] = [];
+      for (const day of days) {
+        for (const start of getTemplateSlotStartsForDay(day)) {
+          const tEnd = new Date(start.getTime() + TEMPLATE_SLOT_DURATION_MIN * 60_000);
+          if (s.slots.some((slot) => slotOverlapsTimeRange(slot, start, tEnd))) continue;
+          toAdd.push({
+            id: createId(),
+            startIso: start.toISOString(),
+            durationMin: TEMPLATE_SLOT_DURATION_MIN,
+            status: 'free',
+          });
+        }
+      }
+      if (toAdd.length === 0) return s;
+      return { ...s, slots: [...s.slots, ...toAdd] };
+    });
   }, []);
 
   const removeSlot = useCallback((slotId: string) => {
@@ -452,6 +484,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sendMessage,
       mockPayTariff,
       savePddResult,
+      ensureFreeTemplateSlotsForWeek,
     }),
     [
       ready,
@@ -478,6 +511,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       sendMessage,
       mockPayTariff,
       savePddResult,
+      ensureFreeTemplateSlotsForWeek,
     ],
   );
 

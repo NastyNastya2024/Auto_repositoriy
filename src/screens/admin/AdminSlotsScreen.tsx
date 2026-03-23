@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
@@ -8,7 +8,8 @@ import { formatSlotDate } from '../../utils/format';
 import { addWeeks, getBookingForSlot, startOfWeekMonday } from '../../utils/weekCalendar';
 
 export function AdminSlotsScreen() {
-  const { state, addSlot, addBlockedSlot, removeSlot, setBookingStatus } = useApp();
+  const { state, addSlot, addBlockedSlot, removeSlot, setBookingStatus, ensureFreeTemplateSlotsForWeek } =
+    useApp();
   const [weekOffset, setWeekOffset] = useState(0);
   const [modal, setModal] = useState(false);
   const [modalKind, setModalKind] = useState<'free' | 'blocked'>('free');
@@ -20,6 +21,10 @@ export function AdminSlotsScreen() {
     () => addWeeks(startOfWeekMonday(new Date()), weekOffset),
     [weekOffset],
   );
+
+  useEffect(() => {
+    ensureFreeTemplateSlotsForWeek(weekStartMonday);
+  }, [weekStartMonday, ensureFreeTemplateSlotsForWeek]);
 
   const openModal = (kind: 'free' | 'blocked') => {
     setModalKind(kind);

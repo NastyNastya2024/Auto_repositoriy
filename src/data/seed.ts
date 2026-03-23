@@ -1,12 +1,5 @@
 import type { AppState } from '../types';
 
-const now = new Date();
-const tomorrow = new Date(now);
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(10, 0, 0, 0);
-const dayAfter = new Date(tomorrow);
-dayAfter.setHours(14, 30, 0, 0);
-
 export const ADMIN_ID = 'user-admin';
 
 /** Демо-вход админа: логин и пароль (видны только локально на устройстве) */
@@ -27,20 +20,7 @@ export const initialState: AppState = {
     },
   ],
   registrationRequests: [],
-  slots: [
-    {
-      id: 'slot-1',
-      startIso: tomorrow.toISOString(),
-      durationMin: 90,
-      status: 'free',
-    },
-    {
-      id: 'slot-2',
-      startIso: dayAfter.toISOString(),
-      durationMin: 90,
-      status: 'free',
-    },
-  ],
+  slots: [],
   bookings: [],
   tariffs: [
     {

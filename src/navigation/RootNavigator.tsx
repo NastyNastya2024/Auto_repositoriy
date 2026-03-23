@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterRequestScreen } from '../screens/RegisterRequestScreen';
 import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen';
+import { StudentMyBookingsScreen } from '../screens/student/StudentMyBookingsScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
 import { StudentPddScreen } from '../screens/student/StudentPddScreen';
 import { StudentChatScreen } from '../screens/student/StudentChatScreen';
@@ -90,7 +91,12 @@ function StudentNavigator() {
       <StudentTabs.Screen
         name="Calendar"
         component={StudentCalendarScreen}
-        options={{ title: 'Календарь', tabBarLabel: 'Слоты' }}
+        options={{ title: 'Календарь', tabBarLabel: 'Календарь' }}
+      />
+      <StudentTabs.Screen
+        name="MyBookings"
+        component={StudentMyBookingsScreen}
+        options={{ title: 'Мои заявки', tabBarLabel: 'Заявки' }}
       />
       <StudentTabs.Screen
         name="Tariffs"
