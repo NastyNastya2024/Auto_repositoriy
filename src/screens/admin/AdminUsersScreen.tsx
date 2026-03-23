@@ -6,13 +6,16 @@ import { ADMIN_ID } from '../../data/seed';
 export function AdminUsersScreen() {
   const { state, addUser, removeUser, toggleBlockUser } = useApp();
   const [name, setName] = useState('');
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
 
   const students = state.users.filter((u) => u.role === 'student');
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.section}>Новый ученик</Text>
+      <Text style={styles.section}>Новый ученик (вручную)</Text>
       <TextInput
         style={styles.input}
         placeholder="Имя"
@@ -21,27 +24,66 @@ export function AdminUsersScreen() {
       />
       <TextInput
         style={styles.input}
+        placeholder="Логин"
+        value={login}
+        onChangeText={setLogin}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Пароль"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <TextInput
+        style={styles.input}
         placeholder="Телефон"
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Почта (необязательно)"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
       <Pressable
         style={styles.addBtn}
         onPress={() => {
-          addUser(name || 'Ученик', phone || undefined, 'student');
+          const err = addUser({
+            name: name || 'Ученик',
+            login,
+            password,
+            phone: phone || undefined,
+            email: email || undefined,
+            role: 'student',
+          });
+          if (err) {
+            Alert.alert('Ошибка', err);
+            return;
+          }
           setName('');
+          setLogin('');
+          setPassword('');
           setPhone('');
+          setEmail('');
         }}
       >
-        <Text style={styles.addBtnText}>Добавить учётную запись (локально)</Text>
+        <Text style={styles.addBtnText}>Добавить учётную запись</Text>
       </Pressable>
 
       <Text style={[styles.section, { marginTop: 20 }]}>Ученики</Text>
       {students.map((u) => (
         <View key={u.id} style={styles.card}>
           <Text style={styles.name}>{u.name}</Text>
+          <Text style={styles.meta}>Логин: {u.login}</Text>
           {u.phone && <Text style={styles.meta}>{u.phone}</Text>}
+          {u.email && <Text style={styles.meta}>{u.email}</Text>}
           <Text style={styles.meta}>{u.blocked ? 'Заблокирован' : 'Активен'}</Text>
           <View style={styles.row}>
             <Pressable style={styles.small} onPress={() => toggleBlockUser(u.id)}>

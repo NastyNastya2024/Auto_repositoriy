@@ -36,6 +36,8 @@ type AppContextValue = {
   approveRegistrationRequest: (requestId: string) => void;
   deleteRegistrationRequest: (requestId: string) => void;
   addSlot: (start: Date, durationMin: number) => void;
+  /** Админ: перекрыть время (недоступно для записи) */
+  addBlockedSlot: (start: Date, durationMin: number) => void;
   removeSlot: (slotId: string) => void;
   bookSlot: (slotId: string) => void;
   cancelBookingByStudent: (bookingId: string) => void;
@@ -183,6 +185,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       startIso: start.toISOString(),
       durationMin,
       status: 'free' as const,
+    };
+    setState((s) => ({ ...s, slots: [...s.slots, slot] }));
+  }, []);
+
+  const addBlockedSlot = useCallback((start: Date, durationMin: number) => {
+    const slot = {
+      id: createId(),
+      startIso: start.toISOString(),
+      durationMin,
+      status: 'blocked' as const,
     };
     setState((s) => ({ ...s, slots: [...s.slots, slot] }));
   }, []);
@@ -426,6 +438,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       approveRegistrationRequest,
       deleteRegistrationRequest,
       addSlot,
+      addBlockedSlot,
       removeSlot,
       bookSlot,
       cancelBookingByStudent,
@@ -451,6 +464,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       approveRegistrationRequest,
       deleteRegistrationRequest,
       addSlot,
+      addBlockedSlot,
       removeSlot,
       bookSlot,
       cancelBookingByStudent,

@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
+import { RegisterRequestScreen } from '../screens/RegisterRequestScreen';
 import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
 import { StudentPddScreen } from '../screens/student/StudentPddScreen';
@@ -12,9 +13,10 @@ import { AdminSlotsScreen } from '../screens/admin/AdminSlotsScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminTariffsScreen } from '../screens/admin/AdminTariffsScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
+import { AdminRegistrationRequestsScreen } from '../screens/admin/AdminRegistrationRequestsScreen';
 import { AdminChatListScreen } from '../screens/admin/AdminChatListScreen';
 import { AdminChatThreadScreen } from '../screens/admin/AdminChatThreadScreen';
-import type { AdminChatStackParamList } from './types';
+import type { AdminChatStackParamList, AuthStackParamList } from './types';
 
 const theme = {
   ...DefaultTheme,
@@ -25,6 +27,7 @@ const theme = {
 };
 
 const RootStack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const StudentTabs = createBottomTabNavigator();
 const AdminTabs = createBottomTabNavigator();
 const AdminChatStack = createNativeStackNavigator<AdminChatStackParamList>();
@@ -35,6 +38,24 @@ function LogoutHeaderButton() {
     <Pressable onPress={logout} hitSlop={12}>
       <Text style={styles.logout}>Выйти</Text>
     </Pressable>
+  );
+}
+
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#f6f7f9' },
+        headerShadowVisible: false,
+      }}
+    >
+      <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: 'Вход' }} />
+      <AuthStack.Screen
+        name="RegisterRequest"
+        component={RegisterRequestScreen}
+        options={{ title: 'Заявка на доступ' }}
+      />
+    </AuthStack.Navigator>
   );
 }
 
@@ -125,6 +146,15 @@ function AdminNavigator() {
         }}
       />
       <AdminTabs.Screen
+        name="Requests"
+        component={AdminRegistrationRequestsScreen}
+        options={{
+          title: 'Заявки',
+          tabBarLabel: 'Заявки',
+          headerRight: () => <LogoutHeaderButton />,
+        }}
+      />
+      <AdminTabs.Screen
         name="Users"
         component={AdminUsersScreen}
         options={{
@@ -161,7 +191,7 @@ export function RootNavigator() {
     <NavigationContainer theme={theme}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {!sessionUser ? (
-          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
         ) : sessionUser.role === 'student' ? (
           <RootStack.Screen name="Student" component={StudentNavigator} />
         ) : (

@@ -1,14 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { useApp } from '../../context/AppContext';
 import { formatSlotDate } from '../../utils/format';
+import { addWeeks, startOfWeekMonday } from '../../utils/weekCalendar';
 
 export function StudentCalendarScreen() {
   const { state, sessionUser, bookSlot, cancelBookingByStudent } = useApp();
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  const freeSlots = useMemo(
-    () => state.slots.filter((s) => s.status === 'free').sort((a, b) => a.startIso.localeCompare(b.startIso)),
-    [state.slots],
+  const weekStartMonday = useMemo(
+    () => addWeeks(startOfWeekMonday(new Date()), weekOffset),
+    [weekOffset],
   );
 
   const myBookings = useMemo(() => {
@@ -56,17 +59,37 @@ export function StudentCalendarScreen() {
         );
       })}
 
-      <Text style={[styles.heading, { marginTop: 16 }]}>Свободные слоты</Text>
-      {freeSlots.length === 0 && <Text style={styles.muted}>Нет свободных слотов</Text>}
-      {freeSlots.map((item) => (
-        <View key={item.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{formatSlotDate(item.startIso)}</Text>
-          <Text style={styles.muted}>{item.durationMin} мин</Text>
-          <Pressable style={styles.primaryBtn} onPress={() => onBook(item.id)}>
-            <Text style={styles.primaryBtnText}>Записаться</Text>
-          </Pressable>
-        </View>
-      ))}
+      <Text style={[styles.heading, { marginTop: 20 }]}>Расписание недели</Text>
+      <Text style={styles.hint}>
+        Зелёные блоки — свободные слоты. Серые и розовые — занято (без имён других учеников).
+      </Text>
+
+      <View style={styles.weekNav}>
+        <Pressable style={styles.navBtn} onPress={() => setWeekOffset((w) => w - 1)}>
+          <Text style={styles.navBtnText}>‹</Text>
+        </Pressable>
+        <Text style={styles.weekNavTitle}>Неделя</Text>
+        <Pressable style={styles.navBtn} onPress={() => setWeekOffset((w) => w + 1)}>
+          <Text style={styles.navBtnText}>›</Text>
+        </Pressable>
+      </View>
+
+      <WeekScheduleGrid
+        weekStartMonday={weekStartMonday}
+        slots={state.slots}
+        bookings={state.bookings}
+        users={state.users}
+        mode="student"
+        currentStudentId={sessionUser?.id}
+        onPressFreeSlot={(slot) => onBook(slot.id)}
+        onPressOwnPending={(bookingId) =>
+          Alert.alert('Отмена заявки', 'Отменить запрос?', [
+            { text: 'Нет', style: 'cancel' },
+            { text: 'Да', onPress: () => cancelBookingByStudent(bookingId) },
+          ])
+        }
+        onPressAdminSlot={() => {}}
+      />
     </ScrollView>
   );
 }
@@ -75,6 +98,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f6f7f9' },
   content: { padding: 16, paddingBottom: 32 },
   heading: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  hint: { fontSize: 13, color: '#6b7280', marginBottom: 8, lineHeight: 18 },
   muted: { color: '#6b7280', marginBottom: 8 },
   card: {
     backgroundColor: '#fff',
@@ -86,14 +110,23 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 16, fontWeight: '600' },
   status: { marginTop: 4, color: '#374151' },
-  primaryBtn: {
-    marginTop: 10,
-    backgroundColor: '#2563eb',
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  primaryBtnText: { color: '#fff', fontWeight: '600' },
   link: { marginTop: 8 },
   linkText: { color: '#dc2626', fontWeight: '600' },
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  navBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  navBtnText: { fontSize: 22, fontWeight: '600', color: '#2563eb' },
+  weekNavTitle: { fontSize: 15, fontWeight: '600' },
 });

@@ -22,7 +22,14 @@ export interface RegistrationRequest {
   createdAt: string;
 }
 
-export type SlotStatus = 'free' | 'pending' | 'booked' | 'completed' | 'cancelled';
+export type SlotStatus =
+  | 'free'
+  | 'pending'
+  | 'booked'
+  | 'completed'
+  | 'cancelled'
+  /** Перекрытие админом (выходной, недоступно для записи) */
+  | 'blocked';
 
 export interface Slot {
   id: string;
