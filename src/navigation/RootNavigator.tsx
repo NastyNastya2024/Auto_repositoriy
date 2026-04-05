@@ -1,10 +1,12 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterRequestScreen } from '../screens/RegisterRequestScreen';
+import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen';
 import { StudentMyBookingsScreen } from '../screens/student/StudentMyBookingsScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
@@ -19,14 +21,6 @@ import { AdminChatListScreen } from '../screens/admin/AdminChatListScreen';
 import { AdminChatThreadScreen } from '../screens/admin/AdminChatThreadScreen';
 import type { AdminChatStackParamList, AuthStackParamList } from './types';
 
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: '#f6f7f9',
-  },
-};
-
 const RootStack = createNativeStackNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const StudentTabs = createBottomTabNavigator();
@@ -35,21 +29,41 @@ const AdminChatStack = createNativeStackNavigator<AdminChatStackParamList>();
 
 function LogoutHeaderButton() {
   const { logout } = useApp();
+  const { colors } = useTheme();
   return (
     <Pressable onPress={logout} hitSlop={12}>
-      <Text style={styles.logout}>Выйти</Text>
+      <Text style={{ color: colors.link, fontWeight: '600', fontSize: 16 }}>Выйти</Text>
     </Pressable>
   );
 }
 
+function SessionHeaderRight() {
+  return (
+    <View style={styles.headerActions}>
+      <LogoutHeaderButton />
+    </View>
+  );
+}
+
 function AuthNavigator() {
+  const { headerOptions, colors } = useTheme();
   return (
     <AuthStack.Navigator
+      initialRouteName="Welcome"
       screenOptions={{
-        headerStyle: { backgroundColor: '#f6f7f9' },
-        headerShadowVisible: false,
+        ...headerOptions,
+        contentStyle: { backgroundColor: colors.bg },
       }}
     >
+      <AuthStack.Screen
+        name="Welcome"
+        component={WelcomeScreen}
+        options={{
+          headerShown: false,
+          headerLargeTitle: false,
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
       <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: 'Вход' }} />
       <AuthStack.Screen
         name="RegisterRequest"
@@ -61,12 +75,13 @@ function AuthNavigator() {
 }
 
 function AdminChatNavigator() {
+  const { headerOptions } = useTheme();
   return (
-    <AdminChatStack.Navigator>
+    <AdminChatStack.Navigator screenOptions={headerOptions}>
       <AdminChatStack.Screen
         name="ChatList"
         component={AdminChatListScreen}
-        options={{ title: 'Чаты', headerRight: () => <LogoutHeaderButton /> }}
+        options={{ title: 'Чаты', headerRight: () => <SessionHeaderRight /> }}
       />
       <AdminChatStack.Screen
         name="ChatThread"
@@ -81,11 +96,12 @@ function AdminChatNavigator() {
 }
 
 function StudentNavigator() {
+  const { tabScreenOptions } = useTheme();
   return (
     <StudentTabs.Navigator
       screenOptions={{
-        headerRight: () => <LogoutHeaderButton />,
-        tabBarActiveTintColor: '#2563eb',
+        ...tabScreenOptions,
+        headerRight: () => <SessionHeaderRight />,
       }}
     >
       <StudentTabs.Screen
@@ -118,19 +134,16 @@ function StudentNavigator() {
 }
 
 function AdminNavigator() {
+  const { tabScreenOptions } = useTheme();
   return (
-    <AdminTabs.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#2563eb',
-      }}
-    >
+    <AdminTabs.Navigator screenOptions={tabScreenOptions}>
       <AdminTabs.Screen
         name="Slots"
         component={AdminSlotsScreen}
         options={{
           title: 'Слоты',
           tabBarLabel: 'Слоты',
-          headerRight: () => <LogoutHeaderButton />,
+          headerRight: () => <SessionHeaderRight />,
         }}
       />
       <AdminTabs.Screen
@@ -139,7 +152,7 @@ function AdminNavigator() {
         options={{
           title: 'Записи',
           tabBarLabel: 'Записи',
-          headerRight: () => <LogoutHeaderButton />,
+          headerRight: () => <SessionHeaderRight />,
         }}
       />
       <AdminTabs.Screen
@@ -148,7 +161,7 @@ function AdminNavigator() {
         options={{
           title: 'Тарифы',
           tabBarLabel: 'Тарифы',
-          headerRight: () => <LogoutHeaderButton />,
+          headerRight: () => <SessionHeaderRight />,
         }}
       />
       <AdminTabs.Screen
@@ -157,7 +170,7 @@ function AdminNavigator() {
         options={{
           title: 'Заявки',
           tabBarLabel: 'Заявки',
-          headerRight: () => <LogoutHeaderButton />,
+          headerRight: () => <SessionHeaderRight />,
         }}
       />
       <AdminTabs.Screen
@@ -166,7 +179,7 @@ function AdminNavigator() {
         options={{
           title: 'Ученики',
           tabBarLabel: 'Ученики',
-          headerRight: () => <LogoutHeaderButton />,
+          headerRight: () => <SessionHeaderRight />,
         }}
       />
       <AdminTabs.Screen
@@ -184,18 +197,24 @@ function AdminNavigator() {
 
 export function RootNavigator() {
   const { ready, sessionUser } = useApp();
+  const { colors, navigationTheme } = useTheme();
 
   if (!ready) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primaryMuted} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer theme={theme}>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+    <NavigationContainer theme={navigationTheme}>
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.bg },
+        }}
+      >
         {!sessionUser ? (
           <RootStack.Screen name="Auth" component={AuthNavigator} />
         ) : sessionUser.role === 'student' ? (
@@ -209,6 +228,6 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f6f7f9' },
-  logout: { color: '#2563eb', fontWeight: '600', fontSize: 16 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

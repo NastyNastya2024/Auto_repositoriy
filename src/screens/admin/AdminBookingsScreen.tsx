@@ -1,10 +1,14 @@
 import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
+import type { ThemeColors } from '../../theme';
 import { formatSlotDate } from '../../utils/format';
 
 export function AdminBookingsScreen() {
   const { state, setBookingStatus } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const rows = useMemo(
     () => [...state.bookings].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -57,23 +61,31 @@ export function AdminBookingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  empty: { color: '#6b7280' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  title: { fontSize: 16, fontWeight: '700' },
-  meta: { marginTop: 4, color: '#4b5563' },
-  row: { flexDirection: 'row', gap: 10, marginTop: 12, flexWrap: 'wrap' },
-  ok: { backgroundColor: '#2563eb', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  okText: { color: '#fff', fontWeight: '600' },
-  no: { borderWidth: 1, borderColor: '#fecaca', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  noText: { color: '#b91c1c', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    empty: { color: colors.textMuted },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    title: { fontSize: 16, fontWeight: '700', color: colors.text },
+    meta: { marginTop: 4, color: colors.textSecondary },
+    row: { flexDirection: 'row', gap: 10, marginTop: 12, flexWrap: 'wrap' },
+    ok: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+    okText: { color: colors.onPrimary, fontWeight: '600' },
+    no: {
+      borderWidth: 1,
+      borderColor: colors.dangerBorder,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    noText: { color: colors.dangerText, fontWeight: '600' },
+  });
+}

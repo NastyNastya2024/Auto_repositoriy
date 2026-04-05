@@ -1,9 +1,14 @@
+import { useMemo } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
+import type { ThemeColors } from '../../theme';
 import { formatRub } from '../../utils/format';
 
 export function StudentTariffsScreen() {
   const { state, sessionUser, mockPayTariff } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const tariffs = state.tariffs.filter((t) => t.active);
 
   return (
@@ -46,28 +51,30 @@ export function StudentTariffsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f6f7f9' },
-  lead: { color: '#4b5563', marginBottom: 12, lineHeight: 20 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  badge: { fontSize: 12, color: '#2563eb', fontWeight: '600', marginBottom: 6 },
-  title: { fontSize: 17, fontWeight: '700' },
-  desc: { marginTop: 6, color: '#4b5563', lineHeight: 20 },
-  meta: { marginTop: 4, color: '#6b7280' },
-  price: { marginTop: 10, fontSize: 20, fontWeight: '700' },
-  btn: {
-    marginTop: 12,
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  btnText: { color: '#fff', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, padding: 16, backgroundColor: colors.bg },
+    lead: { color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    badge: { fontSize: 12, color: colors.link, fontWeight: '600', marginBottom: 6 },
+    title: { fontSize: 17, fontWeight: '700', color: colors.text },
+    desc: { marginTop: 6, color: colors.textSecondary, lineHeight: 20 },
+    meta: { marginTop: 4, color: colors.textMuted },
+    price: { marginTop: 10, fontSize: 20, fontWeight: '700', color: colors.text },
+    btn: {
+      marginTop: 12,
+      backgroundColor: colors.surfaceMuted,
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    btnText: { color: colors.onPrimary, fontWeight: '600' },
+  });
+}

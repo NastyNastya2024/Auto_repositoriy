@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { Tariff, TariffType } from '../../types';
+import type { ThemeColors } from '../../theme';
 import { createId } from '../../utils/id';
 import { formatRub } from '../../utils/format';
 
@@ -18,6 +20,8 @@ const TYPES: TariffType[] = ['route', 'package', 'full', 'after_exam'];
 
 export function AdminTariffsScreen() {
   const { state, upsertTariff, removeTariff } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Tariff | null>(null);
 
@@ -127,7 +131,7 @@ export function AdminTariffsScreen() {
                 </Pressable>
                 <View style={styles.modalActions}>
                   <Pressable style={styles.cancel} onPress={() => setOpen(false)}>
-                    <Text>Закрыть</Text>
+                    <Text style={styles.cancelText}>Закрыть</Text>
                   </Pressable>
                   <Pressable
                     style={styles.save}
@@ -148,65 +152,69 @@ export function AdminTariffsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  addBtn: {
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  addBtnText: { color: '#fff', fontWeight: '700' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  badge: { fontSize: 12, color: '#2563eb', fontWeight: '600' },
-  title: { fontSize: 16, fontWeight: '700', marginTop: 4 },
-  meta: { marginTop: 4, color: '#6b7280' },
-  row: { flexDirection: 'row', gap: 12, marginTop: 10 },
-  linkBtn: { paddingVertical: 6 },
-  linkBtnText: { color: '#2563eb', fontWeight: '600' },
-  danger: { paddingVertical: 6 },
-  dangerText: { color: '#b91c1c', fontWeight: '600' },
-  modalBg: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 12,
-  },
-  modalCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, maxHeight: '90%' },
-  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
-  label: { marginTop: 8, marginBottom: 4, color: '#4b5563', fontSize: 13 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: '#f9fafb',
-  },
-  typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-    maxWidth: '48%',
-  },
-  chipOn: { backgroundColor: '#dbeafe' },
-  chipText: { fontSize: 12, color: '#374151' },
-  chipTextOn: { color: '#1d4ed8', fontWeight: '700' },
-  toggle: { marginTop: 12, padding: 10, backgroundColor: '#f3f4f6', borderRadius: 8 },
-  toggleText: { fontWeight: '600' },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 14 },
-  cancel: { padding: 10 },
-  save: { backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
-  saveText: { color: '#fff', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    addBtn: {
+      backgroundColor: colors.surfaceMuted,
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginBottom: 14,
+    },
+    addBtnText: { color: colors.onPrimary, fontWeight: '700' },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    badge: { fontSize: 12, color: colors.link, fontWeight: '600' },
+    title: { fontSize: 16, fontWeight: '700', marginTop: 4, color: colors.text },
+    meta: { marginTop: 4, color: colors.textMuted },
+    row: { flexDirection: 'row', gap: 12, marginTop: 10 },
+    linkBtn: { paddingVertical: 6 },
+    linkBtnText: { color: colors.link, fontWeight: '600' },
+    danger: { paddingVertical: 6 },
+    dangerText: { color: colors.dangerText, fontWeight: '600' },
+    modalBg: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'center',
+      padding: 12,
+    },
+    modalCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 14, maxHeight: '90%' },
+    modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10, color: colors.text },
+    label: { marginTop: 8, marginBottom: 4, color: colors.textSecondary, fontSize: 13 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: colors.inputBg,
+      color: colors.text,
+    },
+    typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+    chip: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.chip,
+      maxWidth: '48%',
+    },
+    chipOn: { backgroundColor: colors.chipOn },
+    chipText: { fontSize: 12, color: colors.textSecondary },
+    chipTextOn: { color: colors.chipOnText, fontWeight: '700' },
+    toggle: { marginTop: 12, padding: 10, backgroundColor: colors.chip, borderRadius: 8 },
+    toggleText: { fontWeight: '600', color: colors.text },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 14 },
+    cancel: { padding: 10 },
+    cancelText: { color: colors.textSecondary },
+    save: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+    saveText: { color: colors.onPrimary, fontWeight: '600' },
+  });
+}

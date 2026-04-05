@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
+import type { ThemeColors } from '../../theme';
 import { addWeeks, startOfWeekMonday } from '../../utils/weekCalendar';
 
 export function StudentCalendarScreen() {
   const { state, sessionUser, bookSlot, cancelBookingByStudent, ensureFreeTemplateSlotsForWeek } =
     useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekStartMonday = useMemo(
@@ -32,8 +36,8 @@ export function StudentCalendarScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.hint}>
-        Слоты по 1,5 ч с 11:00 до 21:30 создаются автоматически на выбранную неделю. Зелёные —
-        свободно; серые и розовые — занято (без имён других учеников).
+        Слоты по 1,5 ч с 11:00 до 21:30 создаются автоматически на выбранную неделю. Светло-голубые
+        помечены как свободно; остальные оттенки — занято (без имён других учеников).
       </Text>
 
       <View style={styles.weekNav}>
@@ -66,25 +70,27 @@ export function StudentCalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  hint: { fontSize: 13, color: '#6b7280', marginBottom: 12, lineHeight: 18 },
-  weekNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  navBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  navBtnText: { fontSize: 22, fontWeight: '600', color: '#2563eb' },
-  weekNavTitle: { fontSize: 15, fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    hint: { fontSize: 13, color: colors.textMuted, marginBottom: 12, lineHeight: 18 },
+    weekNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+      paddingHorizontal: 4,
+    },
+    navBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    navBtnText: { fontSize: 22, fontWeight: '600', color: colors.link },
+    weekNavTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  });
+}

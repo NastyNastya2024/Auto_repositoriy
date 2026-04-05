@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import type { ThemeColors } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 import type { Booking, Slot, User } from '../types';
 import {
   GRID_HOUR_END,
@@ -42,6 +45,9 @@ export function WeekScheduleGrid({
   onPressAdminSlot,
 }: Props) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createGridStyles(colors), [colors]);
+
   const timeColW = 36;
   const dayColW = Math.max((width - timeColW - 24) / 7, 40);
   const days = getWeekDayDates(weekStartMonday);
@@ -85,10 +91,7 @@ export function WeekScheduleGrid({
                 style={[styles.dayCol, { width: dayColW, height: GRID_HEIGHT }]}
               >
                 {HOURS.map((h) => (
-                  <View
-                    key={h}
-                    style={[styles.gridLine, { height: HOUR_ROW_PX }]}
-                  />
+                  <View key={h} style={[styles.gridLine, { height: HOUR_ROW_PX }]} />
                 ))}
                 {sorted.map((slot) => {
                   const layout = getSlotLayoutPx(slot, day);
@@ -101,12 +104,13 @@ export function WeekScheduleGrid({
                     booking.userId === currentStudentId &&
                     booking.status === 'pending';
 
-                  const { bg, border, label } = slotAppearance(
+                  const { bg, border, label, text } = slotAppearance(
                     slot,
                     mode,
                     booking,
                     users,
                     isMinePending,
+                    colors,
                   );
 
                   const onPress = () => {
@@ -137,22 +141,36 @@ export function WeekScheduleGrid({
                   ];
 
                   const key = `${slot.id}-${day.getTime()}`;
+                  const textStyle = [styles.slotText, { color: text }];
+                  const isFree = slot.status === 'free';
+                  const slotLabel = (
+                    <Text
+                      style={[textStyle, isFree && styles.slotTextFree]}
+                      numberOfLines={isFree ? 1 : 4}
+                      adjustsFontSizeToFit={isFree}
+                      minimumFontScale={isFree ? 0.12 : 1}
+                      ellipsizeMode={isFree ? 'clip' : 'tail'}
+                    >
+                      {label}
+                    </Text>
+                  );
+
+                  const boxStyleWithLayout = [
+                    ...boxStyle,
+                    isFree && styles.slotBlockFree,
+                  ];
 
                   if (pressable) {
                     return (
-                      <Pressable key={key} onPress={onPress} style={boxStyle}>
-                        <Text style={styles.slotText} numberOfLines={4}>
-                          {label}
-                        </Text>
+                      <Pressable key={key} onPress={onPress} style={boxStyleWithLayout}>
+                        {slotLabel}
                       </Pressable>
                     );
                   }
 
                   return (
-                    <View key={key} style={boxStyle}>
-                      <Text style={styles.slotText} numberOfLines={4}>
-                        {label}
-                      </Text>
+                    <View key={key} style={boxStyleWithLayout}>
+                      {slotLabel}
                     </View>
                   );
                 })}
@@ -171,83 +189,113 @@ function slotAppearance(
   booking: Booking | undefined,
   users: User[],
   isMinePending: boolean,
-): { bg: string; border: string; label: string } {
+  colors: ThemeColors,
+): { bg: string; border: string; label: string; text: string } {
+  const sky = '#60A5FA';
+  const cta = '#3B82F6';
+
   if (slot.status === 'blocked') {
     return {
-      bg: '#f9a8d4',
-      border: '#db2777',
+      bg: 'rgba(15, 23, 42, 0.07)',
+      border: colors.border,
+      text: colors.textSecondary,
       label: mode === 'admin' ? 'Закрыто' : 'Занято',
     };
   }
   if (slot.status === 'free') {
     return {
-      bg: '#d1fae5',
-      border: '#10b981',
+      bg: '#D1EEFC',
+      border: '#7EC8E8',
+      text: '#0f172a',
       label: 'Свободно',
     };
   }
   if (mode === 'student') {
     if (isMinePending) {
       return {
-        bg: '#dbeafe',
-        border: '#2563eb',
+        bg: 'rgba(59, 130, 246, 0.45)',
+        border: '#2563EB',
+        text: '#FFFFFF',
         label: 'Ваша заявка',
       };
     }
     return {
-      bg: '#e5e7eb',
-      border: '#9ca3af',
+      bg: 'rgba(96, 165, 250, 0.18)',
+      border: '#93c5fd',
+      text: colors.textMuted,
       label: 'Занято',
     };
   }
   if (booking && (slot.status === 'pending' || slot.status === 'booked')) {
     const name = getStudentName(booking.userId, users);
     return {
-      bg: '#fbcfe8',
-      border: '#db2777',
+      bg: sky,
+      border: cta,
+      text: '#FFFFFF',
       label: slot.status === 'pending' ? `${name} (ожид.)` : name,
     };
   }
   if (slot.status === 'completed') {
-    return { bg: '#e5e7eb', border: '#6b7280', label: 'Завершено' };
+    return {
+      bg: 'rgba(59, 130, 246, 0.12)',
+      border: '#64748B',
+      text: colors.textMuted,
+      label: 'Завершено',
+    };
   }
-  return { bg: '#f3f4f6', border: '#d1d5db', label: slot.status };
+  return {
+    bg: 'rgba(96, 165, 250, 0.14)',
+    border: '#94A3B8',
+    text: colors.text,
+    label: slot.status,
+  };
 }
 
-const styles = StyleSheet.create({
-  wrap: { marginBottom: 8 },
-  monthTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
-    textTransform: 'capitalize',
-  },
-  headerRow: { flexDirection: 'row' },
-  headCell: { alignItems: 'center', paddingBottom: 6 },
-  headDow: { fontSize: 11, color: '#6b7280' },
-  headDay: { fontSize: 15, fontWeight: '700' },
-  timeCell: { justifyContent: 'flex-start', paddingTop: 0 },
-  timeText: { fontSize: 11, color: '#9ca3af' },
-  dayCol: {
-    position: 'relative',
-    borderLeftWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fafafa',
-  },
-  gridLine: {
-    borderBottomWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  slotBlock: {
-    position: 'absolute',
-    left: 2,
-    right: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    padding: 4,
-    overflow: 'hidden',
-    zIndex: 2,
-  },
-  slotText: { fontSize: 10, fontWeight: '600', color: '#1f2937' },
-});
+function createGridStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { marginBottom: 8 },
+    monthTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: 8,
+      textTransform: 'capitalize',
+      color: colors.text,
+    },
+    headerRow: { flexDirection: 'row' },
+    headCell: { alignItems: 'center', paddingBottom: 6 },
+    headDow: { fontSize: 11, color: colors.textMuted },
+    headDay: { fontSize: 15, fontWeight: '700', color: colors.text },
+    timeCell: { justifyContent: 'flex-start', paddingTop: 0 },
+    timeText: { fontSize: 11, color: colors.textMuted },
+    dayCol: {
+      position: 'relative',
+      borderLeftWidth: 1,
+      borderColor: 'rgba(15, 23, 42, 0.08)',
+      backgroundColor: 'rgba(15, 23, 42, 0.03)',
+    },
+    gridLine: {
+      borderBottomWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 0.14)',
+    },
+    slotBlock: {
+      position: 'absolute',
+      left: 2,
+      right: 2,
+      borderRadius: 6,
+      borderWidth: 1,
+      padding: 4,
+      overflow: 'hidden',
+      zIndex: 2,
+    },
+    slotBlockFree: {
+      justifyContent: 'center',
+      alignItems: 'stretch',
+    },
+    slotText: { fontSize: 10, fontWeight: '600' },
+    slotTextFree: {
+      width: '100%',
+      textAlign: 'center',
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,13 +12,17 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import type { AuthStackParamList } from '../navigation/types';
+import type { ThemeColors } from '../theme';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'RegisterRequest'>;
 
 export function RegisterRequestScreen() {
   const navigation = useNavigation<Nav>();
   const { submitRegistrationRequest } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
@@ -52,6 +56,7 @@ export function RegisterRequestScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           placeholder="Не короче 3 символов"
+          placeholderTextColor={colors.placeholder}
         />
         <Text style={styles.label}>Пароль</Text>
         <TextInput
@@ -60,6 +65,7 @@ export function RegisterRequestScreen() {
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Не короче 4 символов"
+          placeholderTextColor={colors.placeholder}
         />
         <Text style={styles.label}>Мобильный телефон</Text>
         <TextInput
@@ -68,6 +74,7 @@ export function RegisterRequestScreen() {
           onChangeText={setPhone}
           keyboardType="phone-pad"
           placeholder="+7 …"
+          placeholderTextColor={colors.placeholder}
         />
         <Text style={styles.label}>Электронная почта</Text>
         <TextInput
@@ -77,6 +84,7 @@ export function RegisterRequestScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="email@example.com"
+          placeholderTextColor={colors.placeholder}
         />
         <Pressable style={({ pressed }) => [styles.btn, pressed && { opacity: 0.9 }]} onPress={onSubmit}>
           <Text style={styles.btnText}>Отправить заявку</Text>
@@ -86,27 +94,30 @@ export function RegisterRequestScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 20, paddingBottom: 40 },
-  lead: { fontSize: 14, color: '#4b5563', marginBottom: 16, lineHeight: 20 },
-  label: { fontSize: 13, color: '#4b5563', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  btn: {
-    marginTop: 8,
-    backgroundColor: '#111827',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 20, paddingBottom: 40 },
+    lead: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 },
+    label: { fontSize: 13, color: colors.textSecondary, marginBottom: 6 },
+    input: {
+      backgroundColor: colors.inputBg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      marginBottom: 12,
+      fontSize: 16,
+      color: colors.text,
+    },
+    btn: {
+      marginTop: 8,
+      backgroundColor: colors.surfaceMuted,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    btnText: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
+  });
+}

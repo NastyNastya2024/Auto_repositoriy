@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import { ADMIN_ID } from '../../data/seed';
+import type { ThemeColors } from '../../theme';
 
 export function AdminUsersScreen() {
   const { state, addUser, removeUser, toggleBlockUser } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState('');
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -19,12 +23,14 @@ export function AdminUsersScreen() {
       <TextInput
         style={styles.input}
         placeholder="Имя"
+        placeholderTextColor={colors.placeholder}
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
         placeholder="Логин"
+        placeholderTextColor={colors.placeholder}
         value={login}
         onChangeText={setLogin}
         autoCapitalize="none"
@@ -33,6 +39,7 @@ export function AdminUsersScreen() {
       <TextInput
         style={styles.input}
         placeholder="Пароль"
+        placeholderTextColor={colors.placeholder}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -40,6 +47,7 @@ export function AdminUsersScreen() {
       <TextInput
         style={styles.input}
         placeholder="Телефон"
+        placeholderTextColor={colors.placeholder}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
@@ -47,6 +55,7 @@ export function AdminUsersScreen() {
       <TextInput
         style={styles.input}
         placeholder="Почта (необязательно)"
+        placeholderTextColor={colors.placeholder}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -109,39 +118,48 @@ export function AdminUsersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  section: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    backgroundColor: '#fff',
-  },
-  addBtn: {
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  addBtnText: { color: '#fff', fontWeight: '600' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  name: { fontSize: 16, fontWeight: '700' },
-  meta: { marginTop: 4, color: '#6b7280' },
-  row: { flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' },
-  small: { backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  smallText: { fontWeight: '600' },
-  danger: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#fecaca' },
-  dangerText: { color: '#b91c1c', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    section: { fontSize: 16, fontWeight: '700', marginBottom: 8, color: colors.text },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 8,
+      backgroundColor: colors.inputBg,
+      color: colors.text,
+    },
+    addBtn: {
+      backgroundColor: colors.surfaceMuted,
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    addBtnText: { color: colors.onPrimary, fontWeight: '600' },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    name: { fontSize: 16, fontWeight: '700', color: colors.text },
+    meta: { marginTop: 4, color: colors.textMuted },
+    row: { flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' },
+    small: { backgroundColor: colors.chip, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+    smallText: { fontWeight: '600', color: colors.text },
+    danger: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.dangerBorder,
+    },
+    dangerText: { color: colors.dangerText, fontWeight: '600' },
+  });
+}

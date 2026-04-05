@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,14 +12,18 @@ import {
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { ADMIN_LOGIN, ADMIN_PASSWORD } from '../data/seed';
 import type { AuthStackParamList } from '../navigation/types';
+import type { ThemeColors } from '../theme';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
 export function LoginScreen() {
   const navigation = useNavigation<Nav>();
   const { loginWithCredentials } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
 
@@ -51,6 +55,7 @@ export function LoginScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           placeholder="Логин"
+          placeholderTextColor={colors.placeholder}
         />
         <Text style={styles.label}>Пароль</Text>
         <TextInput
@@ -59,6 +64,7 @@ export function LoginScreen() {
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Пароль"
+          placeholderTextColor={colors.placeholder}
         />
 
         <Pressable style={({ pressed }) => [styles.btn, pressed && styles.pressed]} onPress={onSubmit}>
@@ -75,45 +81,48 @@ export function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: '#f6f7f9' },
-  inner: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 26, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  sub: { fontSize: 14, color: '#5c6370', marginBottom: 12, lineHeight: 20 },
-  hint: {
-    fontSize: 13,
-    color: '#2563eb',
-    marginBottom: 20,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  label: { fontSize: 13, color: '#4b5563', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  btn: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  btnSecondary: {
-    backgroundColor: '#fff',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  pressed: { opacity: 0.85 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  btnTextDark: { color: '#111827', fontSize: 16, fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: colors.bg },
+    inner: { flex: 1, padding: 24, justifyContent: 'center' },
+    title: { fontSize: 26, fontWeight: '700', marginBottom: 12, textAlign: 'center', color: colors.text },
+    sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+    hint: {
+      fontSize: 13,
+      color: colors.link,
+      marginBottom: 20,
+      lineHeight: 18,
+      textAlign: 'center',
+    },
+    label: { fontSize: 13, color: colors.textSecondary, marginBottom: 6 },
+    input: {
+      backgroundColor: colors.inputBg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      marginBottom: 12,
+      fontSize: 16,
+      color: colors.text,
+    },
+    btn: {
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    btnSecondary: {
+      backgroundColor: colors.surface,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    pressed: { opacity: 0.85 },
+    btnText: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
+    btnTextDark: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  });
+}

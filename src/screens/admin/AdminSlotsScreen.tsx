@@ -5,11 +5,15 @@ import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { useApp } from '../../context/AppContext';
 import type { Slot } from '../../types';
 import { formatSlotDate } from '../../utils/format';
+import { useTheme } from '../../context/ThemeContext';
+import type { ThemeColors } from '../../theme';
 import { addWeeks, getBookingForSlot, startOfWeekMonday } from '../../utils/weekCalendar';
 
 export function AdminSlotsScreen() {
   const { state, addSlot, addBlockedSlot, removeSlot, setBookingStatus, ensureFreeTemplateSlotsForWeek } =
     useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [modal, setModal] = useState(false);
   const [modalKind, setModalKind] = useState<'free' | 'blocked'>('free');
@@ -161,7 +165,7 @@ export function AdminSlotsScreen() {
             </View>
             <View style={styles.modalActions}>
               <Pressable style={styles.cancel} onPress={() => setModal(false)}>
-                <Text>Отмена</Text>
+                <Text style={styles.cancelText}>Отмена</Text>
               </Pressable>
               <Pressable
                 style={styles.save}
@@ -181,76 +185,79 @@ export function AdminSlotsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  lead: { fontSize: 13, color: '#4b5563', marginBottom: 12, lineHeight: 18 },
-  actions: { flexDirection: 'row', gap: 10, marginBottom: 12, flexWrap: 'wrap' },
-  addBtn: {
-    flex: 1,
-    minWidth: 140,
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  addBtnText: { color: '#fff', fontWeight: '700' },
-  blockBtn: {
-    flex: 1,
-    minWidth: 140,
-    backgroundColor: '#be185d',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  blockBtnText: { color: '#fff', fontWeight: '700' },
-  weekNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  navBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  navBtnText: { fontSize: 22, fontWeight: '600', color: '#2563eb' },
-  weekNavTitle: { fontSize: 15, fontWeight: '600' },
-  modalBg: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: { backgroundColor: '#fff', borderRadius: 14, padding: 16 },
-  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
-  dateBtn: {
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  dateBtnText: { fontWeight: '600' },
-  label: { marginBottom: 8, color: '#4b5563' },
-  durRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-  },
-  chipOn: { backgroundColor: '#dbeafe' },
-  chipText: { color: '#374151' },
-  chipTextOn: { color: '#1d4ed8', fontWeight: '700' },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
-  cancel: { padding: 10 },
-  save: { backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
-  saveText: { color: '#fff', fontWeight: '600' },
-  iosDone: { alignSelf: 'flex-end', paddingVertical: 8 },
-  iosDoneText: { color: '#2563eb', fontWeight: '700' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    lead: { fontSize: 13, color: colors.textSecondary, marginBottom: 12, lineHeight: 18 },
+    actions: { flexDirection: 'row', gap: 10, marginBottom: 12, flexWrap: 'wrap' },
+    addBtn: {
+      flex: 1,
+      minWidth: 140,
+      backgroundColor: colors.surfaceMuted,
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    addBtnText: { color: colors.onPrimary, fontWeight: '700' },
+    blockBtn: {
+      flex: 1,
+      minWidth: 140,
+      backgroundColor: '#1984ED',
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    blockBtnText: { color: '#ffffff', fontWeight: '700' },
+    weekNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+      paddingHorizontal: 4,
+    },
+    navBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    navBtnText: { fontSize: 22, fontWeight: '600', color: colors.link },
+    weekNavTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+    modalBg: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16 },
+    modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12, color: colors.text },
+    dateBtn: {
+      backgroundColor: colors.surfaceMuted,
+      padding: 12,
+      borderRadius: 10,
+      marginBottom: 12,
+    },
+    dateBtnText: { fontWeight: '600', color: colors.text },
+    label: { marginBottom: 8, color: colors.textSecondary },
+    durRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+    chip: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.chip,
+    },
+    chipOn: { backgroundColor: colors.chipOn },
+    chipText: { color: colors.textSecondary },
+    chipTextOn: { color: colors.chipOnText, fontWeight: '700' },
+    modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
+    cancel: { padding: 10 },
+    cancelText: { color: colors.textSecondary },
+    save: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+    saveText: { color: colors.onPrimary, fontWeight: '600' },
+    iosDone: { alignSelf: 'flex-end', paddingVertical: 8 },
+    iosDoneText: { color: colors.link, fontWeight: '700' },
+  });
+}

@@ -12,10 +12,14 @@ import {
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { AdminChatStackParamList } from '../../navigation/types';
+import type { ThemeColors } from '../../theme';
 
 export function AdminChatThreadScreen() {
   const route = useRoute<RouteProp<AdminChatStackParamList, 'ChatThread'>>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { studentId } = route.params;
   const { state, sessionUser, sendMessage } = useApp();
   const [text, setText] = useState('');
@@ -70,6 +74,7 @@ export function AdminChatThreadScreen() {
           value={text}
           onChangeText={setText}
           placeholder="Ответ…"
+          placeholderTextColor={colors.placeholder}
           multiline
         />
         <Pressable style={styles.send} onPress={onSend} disabled={!text.trim()}>
@@ -80,28 +85,43 @@ export function AdminChatThreadScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f6f7f9' },
-  list: { flex: 1, padding: 12 },
-  empty: { color: '#6b7280', textAlign: 'center', marginTop: 24 },
-  bubble: { maxWidth: '85%', padding: 10, borderRadius: 12, marginBottom: 8 },
-  bubbleMine: { alignSelf: 'flex-end', backgroundColor: '#059669' },
-  bubbleOther: { alignSelf: 'flex-start', backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb' },
-  textMine: { color: '#fff' },
-  textOther: { color: '#111827' },
-  time: { marginTop: 4, fontSize: 11, color: '#9ca3af' },
-  row: { flexDirection: 'row', padding: 12, alignItems: 'flex-end', gap: 8, borderTopWidth: 1, borderColor: '#e5e7eb' },
-  input: {
-    flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  send: { backgroundColor: '#111827', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10 },
-  sendText: { color: '#fff', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bg },
+    list: { flex: 1, padding: 12 },
+    empty: { color: colors.textMuted, textAlign: 'center', marginTop: 24 },
+    bubble: { maxWidth: '85%', padding: 10, borderRadius: 12, marginBottom: 8 },
+    bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.success },
+    bubbleOther: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    textMine: { color: colors.onPrimary },
+    textOther: { color: colors.text },
+    time: { marginTop: 4, fontSize: 11, color: colors.textMuted },
+    row: {
+      flexDirection: 'row',
+      padding: 12,
+      alignItems: 'flex-end',
+      gap: 8,
+      borderTopWidth: 1,
+      borderColor: colors.border,
+    },
+    input: {
+      flex: 1,
+      minHeight: 44,
+      maxHeight: 120,
+      backgroundColor: colors.inputBg,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+    },
+    send: { backgroundColor: colors.surfaceMuted, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10 },
+    sendText: { color: colors.onPrimary, fontWeight: '600' },
+  });
+}

@@ -1,8 +1,13 @@
+import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
+import type { ThemeColors } from '../../theme';
 
 export function AdminRegistrationRequestsScreen() {
   const { state, approveRegistrationRequest, deleteRegistrationRequest } = useApp();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const list = [...state.registrationRequests].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
@@ -49,25 +54,33 @@ export function AdminRegistrationRequestsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7f9' },
-  content: { padding: 16, paddingBottom: 32 },
-  lead: { fontSize: 14, color: '#4b5563', marginBottom: 12, lineHeight: 20 },
-  empty: { color: '#6b7280' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  login: { fontSize: 18, fontWeight: '700' },
-  meta: { marginTop: 4, color: '#374151' },
-  date: { marginTop: 6, fontSize: 12, color: '#9ca3af' },
-  row: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  ok: { backgroundColor: '#059669', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
-  okText: { color: '#fff', fontWeight: '600' },
-  no: { borderWidth: 1, borderColor: '#fecaca', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
-  noText: { color: '#b91c1c', fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 32 },
+    lead: { fontSize: 14, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+    empty: { color: colors.textMuted },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    login: { fontSize: 18, fontWeight: '700', color: colors.text },
+    meta: { marginTop: 4, color: colors.textSecondary },
+    date: { marginTop: 6, fontSize: 12, color: colors.textMuted },
+    row: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    ok: { backgroundColor: colors.success, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8 },
+    okText: { color: colors.onPrimary, fontWeight: '600' },
+    no: {
+      borderWidth: 1,
+      borderColor: colors.dangerBorder,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
+    noText: { color: colors.dangerText, fontWeight: '600' },
+  });
+}

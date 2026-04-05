@@ -1,14 +1,19 @@
+import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import type { AdminChatStackParamList } from '../../navigation/types';
+import type { ThemeColors } from '../../theme';
 
 type Nav = NativeStackNavigationProp<AdminChatStackParamList, 'ChatList'>;
 
 export function AdminChatListScreen() {
   const { state } = useApp();
   const navigation = useNavigation<Nav>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const students = state.users.filter((u) => u.role === 'student');
 
@@ -38,15 +43,17 @@ export function AdminChatListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  list: { flex: 1, backgroundColor: '#f6f7f9' },
-  empty: { textAlign: 'center', marginTop: 24, color: '#6b7280' },
-  row: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  name: { fontSize: 16, fontWeight: '700' },
-  preview: { marginTop: 4, color: '#6b7280' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: { flex: 1, backgroundColor: colors.bg },
+    empty: { textAlign: 'center', marginTop: 24, color: colors.textMuted },
+    row: {
+      backgroundColor: colors.surface,
+      padding: 14,
+      borderBottomWidth: 1,
+      borderColor: colors.border,
+    },
+    name: { fontSize: 16, fontWeight: '700', color: colors.text },
+    preview: { marginTop: 4, color: colors.textMuted },
+  });
+}
