@@ -1,5 +1,6 @@
 export type AuthStackParamList = {
   Welcome: undefined;
+  HomeMain: undefined;
   Login: undefined;
   RegisterRequest: undefined;
 };

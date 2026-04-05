@@ -1,7 +1,8 @@
 import { Platform } from 'react-native';
+import { lightColors } from '../theme';
 
-const WEB_BG = '#f6f7f9';
-const WEB_TEXT = '#0f172a';
+const WEB_BG = lightColors.bg;
+const WEB_TEXT = lightColors.text;
 
 /**
  * В браузере при системной тёмной теме страница получает `color-scheme: dark`

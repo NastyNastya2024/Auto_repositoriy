@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -26,6 +26,29 @@ export function LoginScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('HomeMain');
+            }
+          }}
+          hitSlop={12}
+          style={{
+            marginLeft: Platform.OS === 'ios' ? 12 : 16,
+            paddingVertical: 6,
+          }}
+        >
+          <Text style={{ color: colors.link, fontSize: 17, fontWeight: '600' }}>Назад</Text>
+        </Pressable>
+      ),
+    });
+  }, [navigation, colors.link]);
 
   const onSubmit = () => {
     const err = loginWithCredentials(login, password);

@@ -26,31 +26,31 @@ export type ThemeColors = {
   placeholder: string;
 };
 
+/** Единая голубая палитра (в духе главного экрана). */
 export const lightColors: ThemeColors = {
-  bg: '#f6f7f9',
+  bg: '#e5f1f9',
   bgElevated: '#ffffff',
   surface: '#ffffff',
-  /** Светлый вторичный фон (экраны, панели ввода). Не использовать тёмные цвета — это ломает «светлую» тему. */
-  surfaceMuted: '#eef0f4',
-  border: '#e5e7eb',
-  borderSubtle: '#e5e7eb',
-  text: '#0f172a',
-  textSecondary: '#4b5563',
-  textMuted: '#6b7280',
-  primary: '#2563eb',
-  primaryMuted: '#2563eb',
+  surfaceMuted: '#d8eaf5',
+  border: '#b9d5ea',
+  borderSubtle: '#d0e4f2',
+  text: '#0f2133',
+  textSecondary: '#3d5266',
+  textMuted: '#5c6b7a',
+  primary: '#1c8fd9',
+  primaryMuted: '#2596df',
   onPrimary: '#ffffff',
-  link: '#2563eb',
-  success: '#059669',
+  link: '#1578b8',
+  success: '#0d9488',
   danger: '#be185d',
   dangerBorder: '#fecaca',
   dangerText: '#b91c1c',
-  overlay: 'rgba(0,0,0,0.4)',
-  chip: '#f3f4f6',
-  chipOn: '#dbeafe',
-  chipOnText: '#1d4ed8',
+  overlay: 'rgba(15, 33, 51, 0.45)',
+  chip: '#e8f4fc',
+  chipOn: '#c5e5f7',
+  chipOnText: '#0b5a8a',
   inputBg: '#ffffff',
-  placeholder: '#9ca3af',
+  placeholder: '#7a8fa0',
 };
 
 export function getColors(): ThemeColors {

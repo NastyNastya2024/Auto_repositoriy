@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
@@ -7,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterRequestScreen } from '../screens/RegisterRequestScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { HomeMainScreen } from '../screens/HomeMainScreen';
 import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen';
 import { StudentMyBookingsScreen } from '../screens/student/StudentMyBookingsScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
@@ -45,6 +47,16 @@ function SessionHeaderRight() {
   );
 }
 
+function AuthLoginHeaderButton() {
+  const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  return (
+    <Pressable onPress={() => navigation.navigate('Login')} hitSlop={10}>
+      <Text style={{ color: colors.link, fontWeight: '700', fontSize: 16 }}>Войти</Text>
+    </Pressable>
+  );
+}
+
 function AuthNavigator() {
   const { headerOptions, colors } = useTheme();
   return (
@@ -64,7 +76,20 @@ function AuthNavigator() {
           contentStyle: { backgroundColor: 'transparent' },
         }}
       />
-      <AuthStack.Screen name="Login" component={LoginScreen} options={{ title: 'Вход' }} />
+      <AuthStack.Screen
+        name="HomeMain"
+        component={HomeMainScreen}
+        options={{
+          title: 'Главная',
+          headerBackTitle: 'Назад',
+          headerRight: () => <AuthLoginHeaderButton />,
+        }}
+      />
+      <AuthStack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ title: 'Вход', headerBackTitle: 'Назад' }}
+      />
       <AuthStack.Screen
         name="RegisterRequest"
         component={RegisterRequestScreen}

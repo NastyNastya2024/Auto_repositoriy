@@ -191,8 +191,8 @@ function slotAppearance(
   isMinePending: boolean,
   colors: ThemeColors,
 ): { bg: string; border: string; label: string; text: string } {
-  const sky = '#60A5FA';
-  const cta = '#3B82F6';
+  const sky = '#52b2e8';
+  const cta = colors.primary;
 
   if (slot.status === 'blocked') {
     return {
@@ -204,24 +204,24 @@ function slotAppearance(
   }
   if (slot.status === 'free') {
     return {
-      bg: '#D1EEFC',
-      border: '#7EC8E8',
-      text: '#0f172a',
+      bg: colors.chipOn,
+      border: colors.border,
+      text: colors.text,
       label: 'Свободно',
     };
   }
   if (mode === 'student') {
     if (isMinePending) {
       return {
-        bg: 'rgba(59, 130, 246, 0.45)',
-        border: '#2563EB',
+        bg: 'rgba(28, 143, 217, 0.45)',
+        border: colors.primary,
         text: '#FFFFFF',
         label: 'Ваша заявка',
       };
     }
     return {
-      bg: 'rgba(96, 165, 250, 0.18)',
-      border: '#93c5fd',
+      bg: 'rgba(28, 143, 217, 0.15)',
+      border: colors.borderSubtle,
       text: colors.textMuted,
       label: 'Занято',
     };
@@ -237,14 +237,14 @@ function slotAppearance(
   }
   if (slot.status === 'completed') {
     return {
-      bg: 'rgba(59, 130, 246, 0.12)',
+      bg: 'rgba(28, 143, 217, 0.12)',
       border: '#64748B',
       text: colors.textMuted,
       label: 'Завершено',
     };
   }
   return {
-    bg: 'rgba(96, 165, 250, 0.14)',
+    bg: 'rgba(28, 143, 217, 0.14)',
     border: '#94A3B8',
     text: colors.text,
     label: slot.status,
@@ -276,7 +276,7 @@ function createGridStyles(colors: ThemeColors) {
     },
     gridLine: {
       borderBottomWidth: 1,
-      borderColor: 'rgba(59, 130, 246, 0.14)',
+      borderColor: 'rgba(28, 143, 217, 0.18)',
     },
     slotBlock: {
       position: 'absolute',

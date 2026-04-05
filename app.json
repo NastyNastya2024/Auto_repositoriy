@@ -7,18 +7,18 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "androidStatusBar": {
-      "backgroundColor": "#e8f4fc",
+      "backgroundColor": "#e5f1f9",
       "barStyle": "dark-content",
       "translucent": false
     },
     "androidNavigationBar": {
-      "backgroundColor": "#f6f7f9",
+      "backgroundColor": "#e5f1f9",
       "barStyle": "dark-content"
     },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#f6f7f9"
+      "backgroundColor": "#e5f1f9"
     },
     "ios": {
       "supportsTablet": true,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
+  Dimensions,
   Image,
   type ImageStyle,
   Platform,
@@ -15,6 +16,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import type { AuthStackParamList } from '../navigation/types';
+import { lightColors } from '../theme';
 import { applyWebDocumentLightTheme } from '../utils/webDocumentTheme';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Welcome'>;
@@ -22,12 +24,12 @@ type Nav = NativeStackNavigationProp<AuthStackParamList, 'Welcome'>;
 const CAR_IMG = require('../../assets/onboarding-car.png');
 const INSTRUCTOR_IMG = require('../../assets/onboarding-instructor.png');
 
-/** Явно светлая палитра экрана — не зависит от темы приложения. */
-const SKY = '#e8f4fc';
-const TEXT = '#0f172a';
-const PRIMARY = '#2563eb';
-const ON_PRIMARY = '#ffffff';
-const MUTED = '#6b7280';
+const SKY = lightColors.bg;
+const TEXT = lightColors.text;
+const ACCENT = lightColors.primary;
+const ON_ACCENT = lightColors.onPrimary;
+const RIM_LIGHT = 'rgba(255, 255, 255, 0.92)';
+const MUTED = lightColors.textMuted;
 
 export function WelcomeScreen() {
   const navigation = useNavigation<Nav>();
@@ -35,6 +37,9 @@ export function WelcomeScreen() {
   const [webSize, setWebSize] = useState({ width: layout.width, height: layout.height });
   const w = Platform.OS === 'web' ? webSize.width : layout.width;
   const h = Platform.OS === 'web' ? webSize.height : layout.height;
+  const screen = Dimensions.get('screen');
+  const bgW = Platform.OS === 'web' ? webSize.width : screen.width;
+  const bgH = Platform.OS === 'web' ? webSize.height : screen.height;
   const styles = useMemo(() => createStyles(w), [w]);
 
   useEffect(() => {
@@ -73,9 +78,11 @@ export function WelcomeScreen() {
   );
 
   const rootExtra =
-    Platform.OS === 'web' ? { width: '100%' as const, minHeight: h } : { width: w, height: h };
+    Platform.OS === 'web'
+      ? { width: '100%' as const, minHeight: h }
+      : { width: bgW, height: bgH };
   const imageExtra: ImageStyle =
-    Platform.OS === 'web' ? { width: '100%', height: h } : { width: w, height: h };
+    Platform.OS === 'web' ? { width: '100%', height: h } : { width: bgW, height: bgH };
 
   return (
     <View style={[styles.root, rootExtra]}>
@@ -86,7 +93,7 @@ export function WelcomeScreen() {
       <Image
         source={CAR_IMG}
         style={[styles.fullImage, imageExtra]}
-        resizeMode="stretch"
+        resizeMode="cover"
         accessibilityLabel="Учебный автомобиль на дороге"
       />
       <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={['top', 'left', 'right', 'bottom']}>
@@ -127,7 +134,7 @@ export function WelcomeScreen() {
 
             <Pressable
               style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-              onPress={() => navigation.navigate('Login')}
+              onPress={() => navigation.navigate('HomeMain')}
               accessibilityRole="button"
               accessibilityLabel="Перейти к входу"
             >
@@ -163,6 +170,8 @@ function createStyles(screenWidth: number) {
       position: 'absolute',
       left: 0,
       top: 0,
+      right: 0,
+      bottom: 0,
     },
     safe: {
       flex: 1,
@@ -198,20 +207,28 @@ function createStyles(screenWidth: number) {
       letterSpacing: -0.8,
       lineHeight: Math.round(titleFontSize * 1.08),
       marginBottom: 12,
+      textShadowColor: RIM_LIGHT,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 10,
     },
     badge: {
       alignSelf: 'flex-start',
-      backgroundColor: PRIMARY,
+      backgroundColor: ACCENT,
       paddingVertical: Math.round(titleFontSize * 0.12),
       paddingHorizontal: Math.round(titleFontSize * 0.32),
       borderRadius: 10,
       marginBottom: 8,
+      borderWidth: 2,
+      borderColor: RIM_LIGHT,
     },
     badgeText: {
-      color: ON_PRIMARY,
+      color: ON_ACCENT,
       fontWeight: '600',
       fontSize: titleFontSize,
       letterSpacing: 0.5,
+      textShadowColor: 'rgba(0, 0, 0, 0.12)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 0,
     },
     card: {
       backgroundColor: '#ffffff',
@@ -256,7 +273,7 @@ function createStyles(screenWidth: number) {
     phone: {
       fontSize: 15,
       fontWeight: '600',
-      color: PRIMARY,
+      color: ACCENT,
       marginBottom: 6,
       letterSpacing: 0.3,
     },
@@ -265,16 +282,18 @@ function createStyles(screenWidth: number) {
       color: TEXT,
     },
     cta: {
-      backgroundColor: PRIMARY,
+      backgroundColor: ACCENT,
       paddingVertical: 16,
       borderRadius: 14,
       alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: RIM_LIGHT,
     },
     ctaPressed: {
       opacity: 0.9,
     },
     ctaText: {
-      color: ON_PRIMARY,
+      color: ON_ACCENT,
       fontSize: 17,
       fontWeight: '700',
     },
