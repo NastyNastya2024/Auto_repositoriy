@@ -22,127 +22,150 @@ type Nav = NativeStackNavigationProp<AuthStackParamList, 'HomeMain'>;
 const INSTRUCTOR_IMG = require('../../assets/onboarding-instructor.png');
 const CAR_IMG = require('../../assets/onboarding-car.png');
 
+/** Заливка под небо на иллюстрации (светлый голубой, как верх кадра). */
+const CAR_SKY_FILL = '#c4e2fa';
+
 export function HomeMainScreen() {
   const navigation = useNavigation<Nav>();
   const { state } = useApp();
   const { colors } = useTheme();
-  const { width: winW } = useWindowDimensions();
+  const { width: winW, height: winH } = useWindowDimensions();
+  /** Смещение фото вниз: сверху видна заливка «неба». */
+  const carImageTop = Math.round(Math.min(140, Math.max(64, winH * 0.1)));
   const insets = useSafeAreaInsets();
   const tariffs = useMemo(
     () => [...state.tariffs].filter((t) => t.active).sort((a, b) => a.priceRub - b.priceRub),
     [state.tariffs],
   );
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const tariffCardWidth = Math.min(340, Math.max(260, winW - 56));
+  const scrollPad = 16;
+  const scrollBottomPad = 28;
+  const tariffsSectionInnerW = winW - scrollPad * 2 - 16 * 2;
+  const tariffCardWidth = Math.min(310, Math.max(240, tariffsSectionInnerW - 28));
 
   return (
-    <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
+    <View style={[styles.screen, { paddingBottom: insets.bottom, backgroundColor: CAR_SKY_FILL }]}>
+      <Image
+        source={CAR_IMG}
+        style={[styles.screenBgImage, { width: winW, height: winH, top: carImageTop }]}
+        resizeMode="cover"
+      />
       <ScrollView
+        style={styles.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollInner}
+        contentContainerStyle={[styles.scrollInner, { paddingBottom: scrollBottomPad }]}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.pageLead}>Автоинструктор · АКПП</Text>
-
-        {/* Инструктор */}
-        <View style={styles.card}>
-          <View style={styles.instructorRow}>
-            <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
-            <View style={styles.instructorBody}>
-              <Text style={styles.roleLabel}>Инструктор</Text>
-              <Text style={styles.name}>Эдуард Н.</Text>
-              <Text style={styles.phone}>8 903 252-52-32</Text>
-              <Text style={styles.carHint}>Skoda Octavia</Text>
+        <View style={styles.scrollTopMask}>
+          <View style={styles.heroTitleRow}>
+            <Text style={styles.heroTitle}>Автоинструктор</Text>
+            <View style={styles.akppBadge}>
+              <Text style={styles.akppBadgeText}>АКПП</Text>
             </View>
           </View>
-        </View>
 
-        {/* Плашка до экзамена */}
-        <View style={styles.examBanner}>
-          <Text style={styles.examTitle}>Доведение до экзамена</Text>
-          <Text style={styles.examText}>
-            Пошаговая подготовка под требования ГИБДД: городские маршруты, типовые ошибки, внутренний
-            экзамен и спокойное сопровождение до успешной сдачи. Занятия строятся под ваш темп и
-            график.
-          </Text>
-          <View style={styles.examPills}>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Маршруты</Text>
-            </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Разбор ошибок</Text>
-            </View>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>Сопровождение</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Тарифы */}
-        <Text style={styles.sectionTitle}>Тарифы</Text>
-        <Text style={styles.sectionSub}>Выберите формат занятий — детали уточнит инструктор после входа.</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          nestedScrollEnabled
-          contentContainerStyle={styles.tariffRow}
-          decelerationRate="fast"
-          snapToInterval={tariffCardWidth + 12}
-          snapToAlignment="start"
-          keyboardShouldPersistTaps="handled"
-        >
-          {tariffs.map((t) => (
-            <View key={t.id} style={[styles.tariffCard, { width: tariffCardWidth }]}>
-              <View style={styles.tariffCardBody}>
-                <View style={styles.tariffHead}>
-                  <View style={styles.tariffBadgeWrap}>
-                    <Text style={styles.tariffBadge}>{tariffTypeLabel(t.type)}</Text>
-                  </View>
-                  <Text style={styles.tariffPrice}>{formatRub(t.priceRub)}</Text>
-                </View>
-                <Text style={styles.tariffName}>{t.name}</Text>
-                <Text style={styles.tariffDesc}>{t.description}</Text>
-                {t.lessonsCount != null && (
-                  <Text style={styles.tariffMeta}>Занятий в пакете: {t.lessonsCount}</Text>
-                )}
-                {t.durationMin != null && (
-                  <Text style={styles.tariffMeta}>Длительность: {t.durationMin} мин</Text>
-                )}
+          <View style={styles.card}>
+            <View style={styles.instructorRow}>
+              <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
+              <View style={styles.instructorBody}>
+                <Text style={styles.roleLabel}>Инструктор</Text>
+                <Text style={styles.name}>Эдуард Н.</Text>
+                <Text style={styles.phone}>8 903 252-52-32</Text>
+                <Text style={styles.carHint}>Skoda Octavia</Text>
               </View>
-              <Pressable
-                style={({ pressed }) => [styles.tariffCta, pressed && styles.tariffCtaPressed]}
-                onPress={() => navigation.navigate('RegisterRequest')}
-              >
-                <Text style={styles.tariffCtaText}>Отправить заявку</Text>
-              </Pressable>
             </View>
-          ))}
-        </ScrollView>
-
-        {/* Автомобиль */}
-        <View style={styles.carBlock}>
-          <Text style={styles.sectionTitle}>Автомобиль</Text>
-          <View style={[styles.carImageWrap, { maxWidth: winW - 32 }]}>
-            <Image source={CAR_IMG} style={styles.carImage} resizeMode="cover" />
+            <Pressable
+              style={({ pressed }) => [styles.trialCta, pressed && styles.trialCtaPressed]}
+              onPress={() => navigation.navigate('RegisterRequest')}
+            >
+              <Text style={styles.trialCtaText}>Записаться на пробный урок</Text>
+            </Pressable>
           </View>
-          <View style={styles.carCard}>
-            <Text style={styles.carTitle}>Škoda Octavia</Text>
-            <Text style={styles.carSubtitle}>Учебный автомобиль с АКПП</Text>
-            <View style={styles.carFacts}>
-              <Text style={styles.carFact}>• Коробка: автомат (АКПП)</Text>
-              <Text style={styles.carFact}>• Знак «У» на крыше — учебная езда по правилам</Text>
-              <Text style={styles.carFact}>• Комфортный салон и хороший обзор для новичков</Text>
-              <Text style={styles.carFact}>• Регулярное техобслуживание и страховка</Text>
+
+          <View style={styles.examBanner}>
+            <Text style={styles.examTitle}>Доведение до экзамена</Text>
+            <Text style={styles.examText}>
+              Пошаговая подготовка под требования ГИБДД: городские маршруты, типовые ошибки, внутренний
+              экзамен и спокойное сопровождение до успешной сдачи. Занятия строятся под ваш темп и
+              график.
+            </Text>
+            <View style={styles.examPills}>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>Маршруты</Text>
+              </View>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>Разбор ошибок</Text>
+              </View>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>Сопровождение</Text>
+              </View>
             </View>
+          </View>
+
+          <View style={styles.tariffsSection}>
+            <Text style={styles.sectionTitle}>Тарифы</Text>
+            <Text style={styles.sectionSub}>
+              Выберите формат занятий — детали уточнит инструктор после входа.
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              nestedScrollEnabled
+              contentContainerStyle={styles.tariffRow}
+              decelerationRate="fast"
+              snapToInterval={tariffCardWidth + 12}
+              snapToAlignment="start"
+              keyboardShouldPersistTaps="handled"
+            >
+              {tariffs.map((t) => (
+                <View key={t.id} style={[styles.tariffCard, { width: tariffCardWidth }]}>
+                  <View style={styles.tariffCardBody}>
+                    <View style={styles.tariffHead}>
+                      <View style={styles.tariffBadgeWrap}>
+                        <Text style={styles.tariffBadge}>{tariffTypeLabel(t.type)}</Text>
+                      </View>
+                      <Text style={styles.tariffPrice}>{formatRub(t.priceRub)}</Text>
+                    </View>
+                    <Text style={styles.tariffName}>{t.name}</Text>
+                    <Text style={styles.tariffDesc}>{t.description}</Text>
+                    {t.lessonsCount != null && (
+                      <Text style={styles.tariffMeta}>Занятий в пакете: {t.lessonsCount}</Text>
+                    )}
+                    {t.durationMin != null && (
+                      <Text style={styles.tariffMeta}>Длительность: {t.durationMin} мин</Text>
+                    )}
+                  </View>
+                  <Pressable
+                    style={({ pressed }) => [styles.tariffCta, pressed && styles.tariffCtaPressed]}
+                    onPress={() => navigation.navigate('RegisterRequest')}
+                  >
+                    <Text style={styles.tariffCtaText}>Отправить заявку</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [styles.loginCta, pressed && styles.loginCtaPressed]}
-          onPress={() => navigation.navigate('Login')}
+        {/* Низ: фото видно на весь экран; стеклянная карточка поверх */}
+        <View
+          style={[
+            styles.carOverPhoto,
+            {
+              minHeight: Math.max(winH * 0.52, 340),
+              paddingBottom: Math.max(insets.bottom, 16) + 8,
+            },
+          ]}
         >
-          <Text style={styles.loginCtaText}>Войти в приложение</Text>
-        </Pressable>
+          <View style={styles.carCardGlass}>
+            <Text style={styles.carTitle}>Škoda Octavia</Text>
+            <Text style={styles.carSubtitle}>Учебная с АКПП</Text>
+            <View style={styles.carFacts}>
+              <Text style={styles.carFact}>• АКПП, знак «У», комфортный салон</Text>
+              <Text style={styles.carFact}>• Регулярное ТО и страховка</Text>
+            </View>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -152,20 +175,64 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.bg,
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    screenBgImage: {
+      position: 'absolute',
+      left: 0,
+      zIndex: 0,
+    },
+    scroll: {
+      flex: 1,
+      backgroundColor: 'transparent',
+      zIndex: 1,
     },
     scrollInner: {
+      paddingBottom: 0,
+      flexGrow: 1,
+    },
+    scrollTopMask: {
       paddingHorizontal: 16,
       paddingTop: 12,
-      paddingBottom: 28,
+      backgroundColor: 'transparent',
     },
-    pageLead: {
+    carOverPhoto: {
+      alignSelf: 'stretch',
+      width: '100%',
+      justifyContent: 'flex-start',
+      alignItems: 'stretch',
+      paddingHorizontal: 16,
+      paddingTop: 0,
+    },
+    heroTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      paddingRight: 2,
+    },
+    heroTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: -0.3,
+      flex: 1,
+      textShadowColor: 'rgba(0,0,0,0.35)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
+    },
+    akppBadge: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    akppBadgeText: {
       fontSize: 13,
-      fontWeight: '700',
-      color: colors.primary,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
-      marginBottom: 14,
+      fontWeight: '800',
+      color: colors.onPrimary,
+      letterSpacing: 0.5,
     },
     card: {
       backgroundColor: colors.surface,
@@ -216,12 +283,25 @@ function createStyles(colors: ThemeColors) {
       fontSize: 15,
       color: colors.textSecondary,
     },
+    trialCta: {
+      marginTop: 16,
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 14,
+      alignItems: 'center',
+    },
+    trialCtaPressed: { opacity: 0.9 },
+    trialCtaText: {
+      color: colors.onPrimary,
+      fontSize: 16,
+      fontWeight: '700',
+    },
     examBanner: {
       backgroundColor: colors.primary,
       borderRadius: 20,
       paddingVertical: 24,
       paddingHorizontal: 20,
-      marginBottom: 24,
+      marginBottom: 22,
     },
     examTitle: {
       fontSize: 22,
@@ -252,6 +332,19 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '600',
       color: colors.onPrimary,
     },
+    tariffsSection: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 16,
+      marginBottom: 22,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 2,
+    },
     sectionTitle: {
       fontSize: 22,
       fontWeight: '800',
@@ -268,8 +361,7 @@ function createStyles(colors: ThemeColors) {
     tariffRow: {
       flexDirection: 'row',
       alignItems: 'stretch',
-      paddingRight: 16,
-      marginBottom: 28,
+      paddingRight: 8,
     },
     tariffCard: {
       backgroundColor: colors.surface,
@@ -337,59 +429,48 @@ function createStyles(colors: ThemeColors) {
       fontSize: 15,
       fontWeight: '600',
     },
-    carBlock: {
-      marginBottom: 24,
-    },
-    carImageWrap: {
-      alignSelf: 'center',
+    carCardGlass: {
+      alignSelf: 'stretch',
       width: '100%',
       borderRadius: 20,
-      overflow: 'hidden',
-      marginBottom: 14,
-      backgroundColor: colors.surfaceMuted,
-    },
-    carImage: {
-      width: '100%',
-      aspectRatio: 9 / 16,
-      maxHeight: 340,
-    },
-    carCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 20,
-      padding: 18,
+      paddingVertical: 18,
+      paddingHorizontal: 18,
+      backgroundColor: 'rgba(255, 255, 255, 0.22)',
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
+      borderColor: 'rgba(255, 255, 255, 0.55)',
+      shadowColor: '#0f2133',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 4,
     },
     carTitle: {
       fontSize: 20,
       fontWeight: '800',
-      color: colors.text,
+      color: '#ffffff',
       marginBottom: 4,
+      textShadowColor: 'rgba(0,0,0,0.45)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 4,
     },
     carSubtitle: {
-      fontSize: 15,
-      color: colors.textSecondary,
-      marginBottom: 12,
+      fontSize: 14,
+      color: 'rgba(255,255,255,0.92)',
+      marginBottom: 10,
+      textShadowColor: 'rgba(0,0,0,0.35)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
     },
     carFacts: {
-      gap: 6,
+      gap: 4,
     },
     carFact: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
-    },
-    loginCta: {
-      backgroundColor: colors.primary,
-      paddingVertical: 16,
-      borderRadius: 14,
-      alignItems: 'center',
-    },
-    loginCtaPressed: { opacity: 0.9 },
-    loginCtaText: {
-      color: colors.onPrimary,
-      fontSize: 16,
-      fontWeight: '700',
+      fontSize: 13,
+      color: 'rgba(255,255,255,0.95)',
+      lineHeight: 18,
+      textShadowColor: 'rgba(0,0,0,0.35)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 3,
     },
   });
 }
