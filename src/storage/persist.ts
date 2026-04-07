@@ -56,12 +56,12 @@ function migrateV1ToV2(raw: Record<string, unknown>): AppState {
     sessionUserId: (raw.sessionUserId as string | null) ?? null,
     users,
     registrationRequests: [] as RegistrationRequest[],
+    studentTariffRequests: [],
     slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
     bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
     tariffs: initialState.tariffs,
     messages: Array.isArray(raw.messages) ? raw.messages : [],
     payments: Array.isArray(raw.payments) ? raw.payments : [],
-    pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],
   };
 }
 
@@ -92,12 +92,14 @@ function normalize(raw: Record<string, unknown> | null): AppState {
       registrationRequests: Array.isArray(raw.registrationRequests)
         ? raw.registrationRequests
         : [],
+      studentTariffRequests: Array.isArray(raw.studentTariffRequests)
+        ? raw.studentTariffRequests
+        : [],
       slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
       bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
       tariffs: initialState.tariffs,
       messages: Array.isArray(raw.messages) ? raw.messages : [],
       payments: Array.isArray(raw.payments) ? raw.payments : [],
-      pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],
     };
   }
 
@@ -121,12 +123,14 @@ function normalize(raw: Record<string, unknown> | null): AppState {
       registrationRequests: Array.isArray(raw.registrationRequests)
         ? raw.registrationRequests
         : [],
+      studentTariffRequests: Array.isArray(raw.studentTariffRequests)
+        ? raw.studentTariffRequests
+        : [],
       slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
       bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
       tariffs: mergeTariffsFromSeed(raw.tariffs, initialState.tariffs),
       messages: Array.isArray(raw.messages) ? raw.messages : [],
       payments: Array.isArray(raw.payments) ? raw.payments : [],
-      pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],
     };
   }
 

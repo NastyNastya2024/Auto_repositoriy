@@ -18,6 +18,17 @@ import type { ThemeColors } from '../theme';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'RegisterRequest'>;
 
+function webAlert(message: string) {
+  if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
+    const win = globalThis as typeof globalThis & { alert?: (m: string) => void };
+    if (typeof win.alert === 'function') {
+      win.alert(message);
+      return true;
+    }
+  }
+  return false;
+}
+
 export function RegisterRequestScreen() {
   const navigation = useNavigation<Nav>();
   const { submitRegistrationRequest } = useApp();
@@ -29,14 +40,29 @@ export function RegisterRequestScreen() {
   const [email, setEmail] = useState('');
 
   const onSubmit = () => {
-    const err = submitRegistrationRequest({ login, password, phone, email });
-    if (err) {
-      Alert.alert('Заявка', err);
-      return;
+    try {
+      const err = submitRegistrationRequest({ login, password, phone, email });
+      if (err) {
+        if (!webAlert(`Заявка\n\n${err}`)) {
+          Alert.alert('Заявка не отправлена', err);
+        }
+        return;
+      }
+      const okTitle = 'Заявка отправлена';
+      const okBody =
+        'Дождитесь подтверждения администратора, затем войдите с этим логином и паролем.';
+      const goLogin = () => navigation.navigate('Login');
+      if (!webAlert(`${okTitle}\n\n${okBody}`)) {
+        Alert.alert(okTitle, okBody, [{ text: 'OK', onPress: goLogin }]);
+      } else {
+        goLogin();
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Не удалось сохранить заявку';
+      if (!webAlert(`Ошибка\n\n${msg}`)) {
+        Alert.alert('Ошибка', msg);
+      }
     }
-    Alert.alert('Заявка отправлена', 'Дождитесь подтверждения администратора, затем войдите с этим логином и паролем.', [
-      { text: 'OK', onPress: () => navigation.navigate('Login') },
-    ]);
   };
 
   return (
@@ -113,7 +139,7 @@ function createStyles(colors: ThemeColors) {
     },
     btn: {
       marginTop: 8,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.primary,
       paddingVertical: 14,
       borderRadius: 12,
       alignItems: 'center',

@@ -11,6 +11,10 @@ export interface User {
   phone?: string;
   email?: string;
   blocked?: boolean;
+  /** Комментарий администратора о ученике (виден только в админке) */
+  adminNote?: string;
+  /** Тариф, закреплённый администратором; без него ученик не может записываться на занятия */
+  assignedTariffId?: string;
 }
 
 export interface RegistrationRequest {
@@ -19,6 +23,14 @@ export interface RegistrationRequest {
   password: string;
   phone: string;
   email: string;
+  createdAt: string;
+}
+
+/** Ученик запросил закрепление тарифа; админ подтверждает в разделе «Заявки». */
+export interface StudentTariffRequest {
+  id: string;
+  studentId: string;
+  tariffId: string;
   createdAt: string;
 }
 
@@ -47,6 +59,8 @@ export interface Booking {
   tariffId?: string;
   status: BookingStatus;
   createdAt: string;
+  /** Ученик отметил, что оплатил (видно администратору) */
+  studentMarkedPaid?: boolean;
 }
 
 export type TariffType = 'trial' | 'route' | 'package' | 'full' | 'after_exam';
@@ -80,30 +94,15 @@ export interface LocalPayment {
   createdAt: string;
 }
 
-export interface PddQuestion {
-  id: string;
-  text: string;
-  options: string[];
-  correctIndex: number;
-  category: string;
-}
-
-export interface PddProgress {
-  userId: string;
-  lastScore: number;
-  lastTotal: number;
-  updatedAt: string;
-}
-
 export interface AppState {
   version: 3;
   sessionUserId: string | null;
   users: User[];
   registrationRequests: RegistrationRequest[];
+  studentTariffRequests: StudentTariffRequest[];
   slots: Slot[];
   bookings: Booking[];
   tariffs: Tariff[];
   messages: Message[];
   payments: LocalPayment[];
-  pddProgress: PddProgress[];
 }

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
+import { ChatMessageRow } from '../../components/ChatMessageRow';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { AdminChatStackParamList } from '../../navigation/types';
@@ -20,7 +21,7 @@ export function AdminChatThreadScreen() {
   const route = useRoute<RouteProp<AdminChatStackParamList, 'ChatThread'>>();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { studentId } = route.params;
+  const { studentId, studentName } = route.params;
   const { state, sessionUser, sendMessage } = useApp();
   const [text, setText] = useState('');
   const listRef = useRef<FlatList>(null);
@@ -52,16 +53,19 @@ export function AdminChatThreadScreen() {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => {
           const mine = item.senderId === sessionUser?.id;
+          const timeLabel = new Date(item.createdAt).toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          const senderLabel = mine ? 'Вы · админ' : studentName;
           return (
-            <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-              <Text style={mine ? styles.textMine : styles.textOther}>{item.text}</Text>
-              <Text style={[styles.time, mine && styles.timeMine]}>
-                {new Date(item.createdAt).toLocaleTimeString('ru-RU', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </Text>
-            </View>
+            <ChatMessageRow
+              colors={colors}
+              text={item.text}
+              timeLabel={timeLabel}
+              isMine={mine}
+              senderLabel={senderLabel}
+            />
           );
         }}
         ListEmptyComponent={
@@ -98,23 +102,6 @@ function createStyles(colors: ThemeColors) {
     flex: { flex: 1, backgroundColor: colors.bg },
     list: { flex: 1, padding: 12 },
     empty: { color: colors.textMuted, textAlign: 'center', marginTop: 24 },
-    bubble: { maxWidth: '85%', padding: 10, borderRadius: 12, marginBottom: 8 },
-    bubbleMine: {
-      alignSelf: 'flex-end',
-      backgroundColor: colors.chipOn,
-      borderWidth: 1,
-      borderColor: colors.primaryMuted,
-    },
-    bubbleOther: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    textMine: { color: colors.text },
-    textOther: { color: colors.text },
-    time: { marginTop: 4, fontSize: 11, color: colors.textMuted },
-    timeMine: { color: colors.link },
     row: {
       flexDirection: 'row',
       padding: 12,

@@ -14,7 +14,6 @@ import { HomeMainScreen } from '../screens/HomeMainScreen';
 import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen';
 import { StudentMyBookingsScreen } from '../screens/student/StudentMyBookingsScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
-import { StudentPddScreen } from '../screens/student/StudentPddScreen';
 import { StudentChatScreen } from '../screens/student/StudentChatScreen';
 import { AdminSlotsScreen } from '../screens/admin/AdminSlotsScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
@@ -176,12 +175,26 @@ function AdminChatNavigator() {
   );
 }
 
+/** Высота контента табов ученика (иконка + подпись); safe area добавляется отдельно снизу. */
+const STUDENT_TAB_BAR_INNER = 72;
+
 function StudentNavigator() {
   const { tabScreenOptions } = useTheme();
+  const insets = useSafeAreaInsets();
+
   return (
     <StudentTabs.Navigator
       screenOptions={{
         ...tabScreenOptions,
+        tabBarStyle: [
+          tabScreenOptions.tabBarStyle,
+          {
+            minHeight: STUDENT_TAB_BAR_INNER + insets.bottom,
+            paddingBottom: insets.bottom,
+            paddingTop: 6,
+          },
+        ],
+        tabBarItemStyle: { paddingTop: 0, paddingBottom: 0 },
         headerRight: () => <SessionHeaderRight />,
       }}
     >
@@ -200,8 +213,8 @@ function StudentNavigator() {
         name="MyBookings"
         component={StudentMyBookingsScreen}
         options={{
-          title: 'Мои заявки',
-          tabBarLabel: 'Заявки',
+          title: 'Уроки',
+          tabBarLabel: 'Уроки',
           tabBarIcon: ({ color }) => (
             <Ionicons name="clipboard-outline" size={STUDENT_TAB_ICON} color={color} />
           ),
@@ -215,17 +228,6 @@ function StudentNavigator() {
           tabBarLabel: 'Тарифы',
           tabBarIcon: ({ color }) => (
             <Ionicons name="pricetag-outline" size={STUDENT_TAB_ICON} color={color} />
-          ),
-        }}
-      />
-      <StudentTabs.Screen
-        name="PDD"
-        component={StudentPddScreen}
-        options={{
-          title: 'ПДД',
-          tabBarLabel: 'ПДД',
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="book-outline" size={STUDENT_TAB_ICON} color={color} />
           ),
         }}
       />

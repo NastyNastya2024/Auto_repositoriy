@@ -1,22 +1,61 @@
 import { useMemo } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import { formatRub } from '../../utils/format';
 
+function runAfterTariffRequestConfirm(name: string, onSend: () => void) {
+  const message = `Отправить заявку на «${name}»? Администратор увидит её в разделе «Заявки».`;
+  if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
+    const win = globalThis as typeof globalThis & { confirm?: (m: string) => boolean };
+    if (typeof win.confirm === 'function') {
+      if (win.confirm(message)) onSend();
+      return;
+    }
+  }
+  Alert.alert('Заявка на тариф', message, [
+    { text: 'Отмена', style: 'cancel' },
+    { text: 'Отправить', onPress: onSend },
+  ]);
+}
+
 export function StudentTariffsScreen() {
-  const { state, sessionUser, mockPayTariff } = useApp();
+  const { state, sessionUser, submitStudentTariffRequest } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const tariffs = state.tariffs.filter((t) => t.active);
+  const myPending = useMemo(() => {
+    if (!sessionUser?.id) return undefined;
+    return (state.studentTariffRequests ?? []).find((r) => r.studentId === sessionUser.id);
+  }, [sessionUser?.id, state.studentTariffRequests]);
+  const pendingTariff = myPending ? state.tariffs.find((t) => t.id === myPending.tariffId) : undefined;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.lead}>Витрина тарифов. Реальная оплата Т-Банка требует сервер с секретами — здесь демо «оплата».</Text>
+      <Text style={styles.lead}>
+        Выберите тариф и отправьте заявку. Администратор закрепит тариф в вашем профиле — после этого
+        можно записываться на занятия.
+      </Text>
+      {myPending ? (
+        <View style={styles.pendingBanner}>
+          <Text style={styles.pendingTitle}>Заявка отправлена</Text>
+          <Text style={styles.pendingText}>
+            Ожидает ответа:{' '}
+            <Text style={styles.pendingEm}>
+              {pendingTariff?.name ?? 'тариф (ждите проверки администратором)'}
+            </Text>
+            . Вы можете отправить заявку на другой тариф — прежняя будет заменена.
+          </Text>
+        </View>
+      ) : null}
       <FlatList
         data={tariffs}
         keyExtractor={(item) => item.id}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <Text style={styles.empty}>Нет доступных тарифов. Обратитесь к администратору.</Text>
+        }
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.badge}>{tariffTypeLabel(item.type)}</Text>
@@ -33,16 +72,24 @@ export function StudentTariffsScreen() {
               style={styles.btn}
               onPress={() => {
                 if (sessionUser?.blocked) {
-                  Alert.alert('Оплата недоступна', 'Аккаунт заблокирован.');
+                  Alert.alert('Недоступно', 'Аккаунт заблокирован.');
                   return;
                 }
-                Alert.alert('Демо-оплата', `Зафиксировать оплату «${item.name}» локально?`, [
-                  { text: 'Отмена', style: 'cancel' },
-                  { text: 'Оплатить (демо)', onPress: () => mockPayTariff(item.id) },
-                ]);
+                if (!sessionUser) {
+                  Alert.alert('Вход', 'Войдите в аккаунт под учеником, затем откройте раздел «Тарифы».');
+                  return;
+                }
+                runAfterTariffRequestConfirm(item.name, () => {
+                  const err = submitStudentTariffRequest(item.id);
+                  if (err) {
+                    Alert.alert('Заявка', err);
+                    return;
+                  }
+                  Alert.alert('Готово', 'Заявка отправлена администратору.');
+                });
               }}
             >
-              <Text style={styles.btnText}>Оплатить (демо)</Text>
+              <Text style={styles.btnText}>Отправить заявку</Text>
             </Pressable>
           </View>
         )}
@@ -55,6 +102,18 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, padding: 16, backgroundColor: colors.bg },
     lead: { color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+    pendingBanner: {
+      backgroundColor: colors.chip,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    pendingTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 6 },
+    pendingText: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
+    pendingEm: { fontWeight: '700', color: colors.text },
+    empty: { color: colors.textMuted, lineHeight: 20, marginTop: 8 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: 12,
@@ -70,7 +129,7 @@ function createStyles(colors: ThemeColors) {
     price: { marginTop: 10, fontSize: 20, fontWeight: '700', color: colors.text },
     btn: {
       marginTop: 12,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.primary,
       paddingVertical: 12,
       borderRadius: 10,
       alignItems: 'center',

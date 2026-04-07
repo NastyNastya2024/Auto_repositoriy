@@ -230,9 +230,9 @@ function slotAppearance(
 ): { bg: string; border: string; label: string; text: string } {
   if (slot.status === 'blocked') {
     return {
-      bg: 'rgba(100, 116, 139, 0.32)',
+      bg: '#94a3b8',
       border: '#64748b',
-      text: '#1e293b',
+      text: '#0f172a',
       label: mode === 'admin' ? 'Закрыто' : 'Занято',
     };
   }
@@ -247,16 +247,16 @@ function slotAppearance(
   if (mode === 'student') {
     if (isMinePending) {
       return {
-        bg: 'rgba(28, 143, 217, 0.45)',
-        border: colors.primary,
-        text: '#FFFFFF',
+        bg: colors.primary,
+        border: colors.link,
+        text: colors.onPrimary,
         label: 'Ваша заявка',
       };
     }
     return {
-      bg: 'rgba(28, 143, 217, 0.14)',
-      border: colors.borderSubtle,
-      text: colors.textMuted,
+      bg: '#a8bfd4',
+      border: colors.border,
+      text: colors.text,
       label: 'Занято',
     };
   }
@@ -271,9 +271,9 @@ function slotAppearance(
   }
   if (slot.status === 'completed') {
     return {
-      bg: 'rgba(15, 157, 138, 0.14)',
+      bg: '#d1f4e8',
       border: colors.success,
-      text: colors.textSecondary,
+      text: colors.text,
       label: 'Завершено',
     };
   }

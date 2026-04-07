@@ -13,7 +13,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { ADMIN_LOGIN, ADMIN_PASSWORD } from '../data/seed';
 import type { AuthStackParamList } from '../navigation/types';
 import type { ThemeColors } from '../theme';
 
@@ -61,16 +60,12 @@ export function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>Автошкола</Text>
+        <Text style={styles.title}>Авторизация</Text>
         <Text style={styles.sub}>
           Данные хранятся только на этом устройстве. Роль определяется учётной записью: админ или
           ученик.
         </Text>
-        <Text style={styles.hint}>
-          Демо-админ: логин «{ADMIN_LOGIN}», пароль «{ADMIN_PASSWORD}»
-        </Text>
 
-        <Text style={styles.label}>Логин</Text>
         <TextInput
           style={styles.input}
           value={login}
@@ -79,8 +74,8 @@ export function LoginScreen() {
           autoCorrect={false}
           placeholder="Логин"
           placeholderTextColor={colors.placeholder}
+          textAlign="center"
         />
-        <Text style={styles.label}>Пароль</Text>
         <TextInput
           style={styles.input}
           value={password}
@@ -88,6 +83,7 @@ export function LoginScreen() {
           secureTextEntry
           placeholder="Пароль"
           placeholderTextColor={colors.placeholder}
+          textAlign="center"
         />
 
         <Pressable style={({ pressed }) => [styles.btn, pressed && styles.pressed]} onPress={onSubmit}>
@@ -109,15 +105,13 @@ function createStyles(colors: ThemeColors) {
     wrap: { flex: 1, backgroundColor: colors.bg },
     inner: { flex: 1, padding: 24, paddingHorizontal: 28, justifyContent: 'center', maxWidth: 440, width: '100%', alignSelf: 'center' },
     title: { fontSize: 26, fontWeight: '700', marginBottom: 14, textAlign: 'center', color: colors.text, letterSpacing: -0.3 },
-    sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
-    hint: {
-      fontSize: 13,
-      color: colors.link,
-      marginBottom: 20,
-      lineHeight: 18,
+    sub: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 24,
+      lineHeight: 20,
       textAlign: 'center',
     },
-    label: { fontSize: 13, color: colors.textSecondary, marginBottom: 6 },
     input: {
       backgroundColor: colors.inputBg,
       borderWidth: 1,

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ChatMessageRow } from '../../components/ChatMessageRow';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
@@ -37,13 +38,19 @@ export function StudentChatScreen() {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => {
           const mine = item.senderId === sessionUser?.id;
+          const timeLabel = new Date(item.createdAt).toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          const senderLabel = mine ? 'Вы · ученик' : 'Администратор';
           return (
-            <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-              <Text style={mine ? styles.textMine : styles.textOther}>{item.text}</Text>
-              <Text style={[styles.time, mine && styles.timeMine]}>
-                {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-              </Text>
-            </View>
+            <ChatMessageRow
+              colors={colors}
+              text={item.text}
+              timeLabel={timeLabel}
+              isMine={mine}
+              senderLabel={senderLabel}
+            />
           );
         }}
         ListEmptyComponent={<Text style={styles.empty}>Напишите администратору — сообщения хранятся только на устройстве.</Text>}
@@ -78,23 +85,6 @@ function createStyles(colors: ThemeColors) {
     flex: { flex: 1, backgroundColor: colors.bg },
     list: { flex: 1, padding: 12 },
     empty: { color: colors.textMuted, textAlign: 'center', marginTop: 24 },
-    bubble: { maxWidth: '85%', padding: 10, borderRadius: 12, marginBottom: 8 },
-    bubbleMine: {
-      alignSelf: 'flex-end',
-      backgroundColor: colors.chipOn,
-      borderWidth: 1,
-      borderColor: colors.primaryMuted,
-    },
-    bubbleOther: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    textMine: { color: colors.text },
-    textOther: { color: colors.text },
-    time: { marginTop: 4, fontSize: 11, color: colors.textMuted },
-    timeMine: { color: colors.link },
     row: {
       flexDirection: 'row',
       padding: 12,

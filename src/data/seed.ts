@@ -20,6 +20,7 @@ export const initialState: AppState = {
     },
   ],
   registrationRequests: [],
+  studentTariffRequests: [],
   slots: [],
   bookings: [],
   tariffs: [
@@ -84,5 +85,4 @@ export const initialState: AppState = {
   ],
   messages: [],
   payments: [],
-  pddProgress: [],
 };

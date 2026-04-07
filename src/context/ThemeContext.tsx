@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import type { Theme } from '@react-navigation/native';
 import {
   type ThemeColors,
@@ -12,7 +13,7 @@ type ThemeContextValue = {
   colors: ThemeColors;
   navigationTheme: Theme;
   headerOptions: ReturnType<typeof getHeaderOptions>;
-  tabScreenOptions: ReturnType<typeof getTabScreenOptions>;
+  tabScreenOptions: BottomTabNavigationOptions;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);

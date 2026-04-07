@@ -1,6 +1,6 @@
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, type Theme } from '@react-navigation/native';
-import { Platform, StyleSheet, type TextStyle } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export type ThemeColors = {
   bg: string;
@@ -92,11 +92,16 @@ export function getHeaderOptions() {
 export function getTabScreenOptions(): BottomTabNavigationOptions {
   const h = getHeaderOptions();
   const c = lightColors;
-  const tabBarLabelStyle: TextStyle = {
-    fontSize: 12,
-    fontWeight: 600,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-  };
+  const tabBarLabelStyle =
+    Platform.OS === 'android'
+      ? ({
+          fontSize: 12,
+          fontWeight: 600,
+          lineHeight: 18,
+          paddingBottom: 0,
+          includeFontPadding: true,
+        } as const)
+      : ({ fontSize: 12, fontWeight: 600, lineHeight: 18, paddingBottom: 0 } as const);
   return {
     ...h,
     tabBarStyle: {
