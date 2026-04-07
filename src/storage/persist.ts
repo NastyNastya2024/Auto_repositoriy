@@ -1,9 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AppState, RegistrationRequest, User } from '../types';
+import type { AppState, RegistrationRequest, Tariff, User } from '../types';
 import { ADMIN_ID, ADMIN_LOGIN, ADMIN_PASSWORD, initialState } from '../data/seed';
 
 const KEY = 'driving-school-local-v3';
 const LEGACY_KEY_V2 = 'driving-school-local-v2';
+
+/** Подмешивает новые тарифы из seed; сохранённые по id поля остаются (цена и т.д. с правками пользователя). */
+function mergeTariffsFromSeed(stored: unknown, seed: Tariff[]): Tariff[] {
+  const list = Array.isArray(stored) ? (stored as Tariff[]) : [];
+  const map = new Map(list.map((t) => [t.id, t]));
+  return seed.map((t) => map.get(t.id) ?? t);
+}
 
 function migrateV1ToV2(raw: Record<string, unknown>): AppState {
   const oldUsers = (raw.users as Partial<User>[]) || [];
@@ -116,7 +123,7 @@ function normalize(raw: Record<string, unknown> | null): AppState {
         : [],
       slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
       bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
-      tariffs: Array.isArray(raw.tariffs) ? raw.tariffs : initialState.tariffs,
+      tariffs: mergeTariffsFromSeed(raw.tariffs, initialState.tariffs),
       messages: Array.isArray(raw.messages) ? raw.messages : [],
       payments: Array.isArray(raw.payments) ? raw.payments : [],
       pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],

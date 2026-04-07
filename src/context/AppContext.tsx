@@ -529,13 +529,13 @@ export function tariffTypeLabel(type: TariffType): string {
     case 'trial':
       return 'Пробное занятие';
     case 'route':
-      return 'Разовый маршрут';
+      return 'Кастомный маршрут';
     case 'package':
       return 'Пакет занятий';
     case 'full':
       return 'Полный пакет';
     case 'after_exam':
-      return 'После сдачи';
+      return 'Занятие после сдачи';
     default:
       return type;
   }
