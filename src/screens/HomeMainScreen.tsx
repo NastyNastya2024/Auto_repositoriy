@@ -12,19 +12,16 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { tariffTypeLabel, useApp } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
+import { TariffCard } from '../components/TariffCard';
 import { useTheme } from '../context/ThemeContext';
 import type { AuthStackParamList } from '../navigation/types';
 import type { ThemeColors } from '../theme';
-import { formatRub } from '../utils/format';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'HomeMain'>;
 
 const INSTRUCTOR_IMG = require('../../assets/onboarding-instructor.png');
 const CAR_IMG = require('../../assets/onboarding-car.png');
-
-/** Заливка под небо на иллюстрации (светлый голубой, как верх кадра). */
-const CAR_SKY_FILL = '#c4e2fa';
 
 /** Что даёт «полный пакет документов» — короткие пункты под заголовком. */
 const DOC_PACK_BULLETS: readonly string[] = [
@@ -50,7 +47,7 @@ export function HomeMainScreen() {
   const instructorStacked = winW < 420;
 
   return (
-    <View style={[styles.screen, { paddingBottom: insets.bottom, backgroundColor: CAR_SKY_FILL }]}>
+    <View style={[styles.screen, { paddingBottom: insets.bottom, backgroundColor: colors.bg }]}>
       <Image
         source={CAR_IMG}
         style={[styles.screenBgImage, { width: winW, height: winH, top: carImageTop }]}
@@ -123,32 +120,13 @@ export function HomeMainScreen() {
               keyboardShouldPersistTaps="handled"
             >
               {tariffs.map((t) => (
-                <View key={t.id} style={[styles.tariffCard, { width: tariffCardWidth }]}>
-                  <View style={styles.tariffCardBody}>
-                    <View style={styles.tariffHead}>
-                      <View style={styles.tariffBadgeWrap}>
-                        <Text style={styles.tariffBadge}>{tariffTypeLabel(t.type)}</Text>
-                      </View>
-                      <Text style={styles.tariffPrice}>{formatRub(t.priceRub)}</Text>
-                    </View>
-                    <Text style={styles.tariffName}>{t.name}</Text>
-                    <Text style={styles.tariffDesc}>{t.description}</Text>
-                    {t.lessonsCount != null && (
-                      <Text style={styles.tariffMeta}>Занятий в пакете: {t.lessonsCount}</Text>
-                    )}
-                    {t.durationMin != null && (
-                      <Text style={[styles.tariffMeta, styles.tariffMetaAfter]}>
-                        Длительность: {t.durationMin} мин
-                      </Text>
-                    )}
-                  </View>
-                  <Pressable
-                    style={({ pressed }) => [styles.tariffCta, pressed && styles.tariffCtaPressed]}
-                    onPress={() => navigation.navigate('RegisterRequest')}
-                  >
-                    <Text style={styles.tariffCtaText}>Отправить заявку</Text>
-                  </Pressable>
-                </View>
+                <TariffCard
+                  key={t.id}
+                  tariff={t}
+                  colors={colors}
+                  cardWidth={tariffCardWidth}
+                  onPressCta={() => navigation.navigate('RegisterRequest')}
+                />
               ))}
             </ScrollView>
           </View>
@@ -411,84 +389,6 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'stretch',
       paddingRight: 8,
       paddingBottom: 4,
-    },
-    /** Вложенная карточка тарифа: рамка, без тяжёлой тени. */
-    tariffCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 14,
-      paddingVertical: 18,
-      paddingHorizontal: 16,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderSubtle,
-      marginRight: 12,
-      justifyContent: 'space-between',
-      minHeight: 272,
-    },
-    tariffCardBody: {
-      flexShrink: 0,
-    },
-    tariffHead: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 14,
-    },
-    tariffBadgeWrap: {
-      backgroundColor: colors.chip,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 999,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.borderSubtle,
-    },
-    tariffBadge: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: colors.primary,
-      letterSpacing: 0.15,
-    },
-    tariffPrice: {
-      fontSize: 18,
-      fontWeight: '800',
-      color: colors.text,
-      letterSpacing: -0.2,
-    },
-    tariffName: {
-      fontSize: 17,
-      fontWeight: '700',
-      color: colors.text,
-      marginBottom: 8,
-      letterSpacing: -0.2,
-    },
-    tariffDesc: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 21,
-      marginBottom: 10,
-    },
-    tariffMeta: {
-      fontSize: 13,
-      color: colors.textMuted,
-      lineHeight: 18,
-    },
-    tariffMetaAfter: {
-      marginTop: 6,
-    },
-    /** Контурная кнопка: белый фон, синяя рамка и текст. */
-    tariffCta: {
-      marginTop: 20,
-      backgroundColor: colors.surface,
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-    },
-    tariffCtaPressed: { opacity: 0.85 },
-    tariffCtaText: {
-      color: colors.primary,
-      fontSize: 15,
-      fontWeight: '600',
     },
     carCardGlass: {
       alignSelf: 'stretch',

@@ -1,4 +1,6 @@
+import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, type Theme } from '@react-navigation/native';
+import { Platform, StyleSheet, type TextStyle } from 'react-native';
 
 export type ThemeColors = {
   bg: string;
@@ -26,14 +28,17 @@ export type ThemeColors = {
   placeholder: string;
 };
 
-/** Единая голубая палитра (в духе главного экрана). */
+/**
+ * Белый фон, голубой — основной бренд (кнопки, табы, чипы).
+ * Зелёный только для успеха; нейтрали слегка подмешаны к небу для цельности.
+ */
 export const lightColors: ThemeColors = {
-  bg: '#e5f1f9',
+  bg: '#ffffff',
   bgElevated: '#ffffff',
   surface: '#ffffff',
-  surfaceMuted: '#d8eaf5',
-  border: '#b9d5ea',
-  borderSubtle: '#d0e4f2',
+  surfaceMuted: '#f2f8fc',
+  border: '#c5dbe8',
+  borderSubtle: '#e3eef5',
   text: '#0f2133',
   textSecondary: '#3d5266',
   textMuted: '#5c6b7a',
@@ -41,7 +46,7 @@ export const lightColors: ThemeColors = {
   primaryMuted: '#2596df',
   onPrimary: '#ffffff',
   link: '#1578b8',
-  success: '#0d9488',
+  success: '#059669',
   danger: '#be185d',
   dangerBorder: '#fecaca',
   dangerText: '#b91c1c',
@@ -49,7 +54,7 @@ export const lightColors: ThemeColors = {
   chip: '#e8f4fc',
   chipOn: '#c5e5f7',
   chipOnText: '#0b5a8a',
-  inputBg: '#ffffff',
+  inputBg: '#fafcfe',
   placeholder: '#7a8fa0',
 };
 
@@ -64,7 +69,7 @@ export function getNavigationTheme(): Theme {
     dark: false,
     colors: {
       ...DefaultTheme.colors,
-      primary: c.primaryMuted,
+      primary: c.primary,
       background: c.bg,
       card: c.bgElevated,
       text: c.text,
@@ -84,16 +89,23 @@ export function getHeaderOptions() {
   };
 }
 
-export function getTabScreenOptions() {
+export function getTabScreenOptions(): BottomTabNavigationOptions {
   const h = getHeaderOptions();
   const c = lightColors;
+  const tabBarLabelStyle: TextStyle = {
+    fontSize: 12,
+    fontWeight: 600,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+  };
   return {
     ...h,
     tabBarStyle: {
       backgroundColor: c.bgElevated,
-      borderTopColor: c.border,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.borderSubtle,
     },
-    tabBarActiveTintColor: c.primaryMuted,
+    tabBarLabelStyle,
+    tabBarActiveTintColor: c.primary,
     tabBarInactiveTintColor: c.textMuted,
   };
 }

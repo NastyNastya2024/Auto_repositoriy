@@ -23,6 +23,43 @@ export function getTemplateSlotStartsForDay(day: Date): Date[] {
   return out;
 }
 
+/**
+ * Ближайшее к выбранному моменту начало «учебного» слота в тот же календарный день,
+ * чтобы слот попадал в сетку 11:00–21:30 (иначе он не рисуется в WeekScheduleGrid).
+ */
+export function snapToTemplateSlotStart(preferred: Date): Date {
+  const dayMidnight = new Date(preferred);
+  dayMidnight.setHours(0, 0, 0, 0);
+  const starts = getTemplateSlotStartsForDay(dayMidnight);
+  if (starts.length === 0) return new Date(preferred);
+
+  const t = preferred.getTime();
+  let best = starts[0];
+  let bestDist = Math.abs(t - best.getTime());
+  for (const s of starts) {
+    const d = Math.abs(t - s.getTime());
+    if (d < bestDist) {
+      bestDist = d;
+      best = s;
+    }
+  }
+  return new Date(best);
+}
+
+/** Первый шаблонный слот сегодня; если день уже поздний — завтра 11:00. */
+export function defaultNewSlotStart(reference: Date = new Date()): Date {
+  const dayMidnight = new Date(reference);
+  dayMidnight.setHours(0, 0, 0, 0);
+  const starts = getTemplateSlotStartsForDay(dayMidnight);
+  for (const s of starts) {
+    if (s.getTime() >= reference.getTime() - 60_000) return new Date(s);
+  }
+  const tomorrow = new Date(dayMidnight);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextStarts = getTemplateSlotStartsForDay(tomorrow);
+  return nextStarts[0] ? new Date(nextStarts[0]) : snapToTemplateSlotStart(reference);
+}
+
 export const HOUR_ROW_PX = 44;
 
 export function startOfWeekMonday(d: Date): Date {

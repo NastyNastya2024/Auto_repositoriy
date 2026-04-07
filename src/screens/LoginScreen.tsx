@@ -107,8 +107,8 @@ export function LoginScreen() {
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     wrap: { flex: 1, backgroundColor: colors.bg },
-    inner: { flex: 1, padding: 24, justifyContent: 'center' },
-    title: { fontSize: 26, fontWeight: '700', marginBottom: 12, textAlign: 'center', color: colors.text },
+    inner: { flex: 1, padding: 24, paddingHorizontal: 28, justifyContent: 'center', maxWidth: 440, width: '100%', alignSelf: 'center' },
+    title: { fontSize: 26, fontWeight: '700', marginBottom: 14, textAlign: 'center', color: colors.text, letterSpacing: -0.3 },
     sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
     hint: {
       fontSize: 13,
@@ -121,31 +121,31 @@ function createStyles(colors: ThemeColors) {
     input: {
       backgroundColor: colors.inputBg,
       borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      marginBottom: 12,
+      borderColor: colors.borderSubtle,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      marginBottom: 14,
       fontSize: 16,
       color: colors.text,
     },
     btn: {
       backgroundColor: colors.primary,
-      paddingVertical: 14,
+      paddingVertical: 15,
       borderRadius: 12,
       alignItems: 'center',
       marginBottom: 12,
     },
     btnSecondary: {
       backgroundColor: colors.surface,
-      paddingVertical: 14,
+      paddingVertical: 15,
       borderRadius: 12,
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     pressed: { opacity: 0.85 },
     btnText: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
-    btnTextDark: { color: colors.text, fontSize: 16, fontWeight: '600' },
+    btnTextDark: { color: colors.link, fontSize: 16, fontWeight: '600' },
   });
 }

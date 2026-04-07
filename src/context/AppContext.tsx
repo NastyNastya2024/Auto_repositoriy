@@ -239,53 +239,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const bookSlot = useCallback(
-    (slotId: string) => {
-      const uid = state.sessionUserId;
-      if (!uid) return;
-      const user = state.users.find((u) => u.id === uid);
-      if (!user || user.blocked || user.role !== 'student') return;
+  const bookSlot = useCallback((slotId: string) => {
+    setState((s) => {
+      const uid = s.sessionUserId;
+      if (!uid) return s;
+      const user = s.users.find((u) => u.id === uid);
+      if (!user || user.blocked || user.role !== 'student') return s;
+      const slot = s.slots.find((x) => x.id === slotId);
+      if (!slot || slot.status !== 'free') return s;
+      const booking: (typeof s.bookings)[0] = {
+        id: createId(),
+        slotId,
+        userId: uid,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+      return {
+        ...s,
+        slots: s.slots.map((x) => (x.id === slotId ? { ...x, status: 'pending' as const } : x)),
+        bookings: [...s.bookings, booking],
+      };
+    });
+  }, []);
 
-      setState((s) => {
-        const slot = s.slots.find((x) => x.id === slotId);
-        if (!slot || slot.status !== 'free') return s;
-        const booking: (typeof s.bookings)[0] = {
-          id: createId(),
-          slotId,
-          userId: uid,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        };
-        return {
-          ...s,
-          slots: s.slots.map((x) => (x.id === slotId ? { ...x, status: 'pending' as const } : x)),
-          bookings: [...s.bookings, booking],
-        };
-      });
-    },
-    [state.sessionUserId, state.users],
-  );
-
-  const cancelBookingByStudent = useCallback(
-    (bookingId: string) => {
-      const uid = state.sessionUserId;
-      if (!uid) return;
-      setState((s) => {
-        const b = s.bookings.find((x) => x.id === bookingId);
-        if (!b || b.userId !== uid || b.status !== 'pending') return s;
-        return {
-          ...s,
-          bookings: s.bookings.map((x) =>
-            x.id === bookingId ? { ...x, status: 'cancelled' as const } : x,
-          ),
-          slots: s.slots.map((sl) =>
-            sl.id === b.slotId ? { ...sl, status: 'free' as const } : sl,
-          ),
-        };
-      });
-    },
-    [state.sessionUserId],
-  );
+  const cancelBookingByStudent = useCallback((bookingId: string) => {
+    setState((s) => {
+      const uid = s.sessionUserId;
+      if (!uid) return s;
+      const b = s.bookings.find((x) => x.id === bookingId);
+      if (!b || b.userId !== uid || b.status !== 'pending') return s;
+      return {
+        ...s,
+        bookings: s.bookings.map((x) =>
+          x.id === bookingId ? { ...x, status: 'cancelled' as const } : x,
+        ),
+        slots: s.slots.map((sl) =>
+          sl.id === b.slotId ? { ...sl, status: 'free' as const } : sl,
+        ),
+      };
+    });
+  }, []);
 
   const setBookingStatus = useCallback((bookingId: string, status: BookingStatus) => {
     setState((s) => {

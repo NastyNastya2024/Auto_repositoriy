@@ -55,7 +55,7 @@ export function AdminChatThreadScreen() {
           return (
             <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
               <Text style={mine ? styles.textMine : styles.textOther}>{item.text}</Text>
-              <Text style={styles.time}>
+              <Text style={[styles.time, mine && styles.timeMine]}>
                 {new Date(item.createdAt).toLocaleTimeString('ru-RU', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -77,7 +77,15 @@ export function AdminChatThreadScreen() {
           placeholderTextColor={colors.placeholder}
           multiline
         />
-        <Pressable style={styles.send} onPress={onSend} disabled={!text.trim()}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.send,
+            !text.trim() && styles.sendDisabled,
+            pressed && text.trim() && styles.sendPressed,
+          ]}
+          onPress={onSend}
+          disabled={!text.trim()}
+        >
           <Text style={styles.sendText}>Отпр.</Text>
         </Pressable>
       </View>
@@ -91,16 +99,22 @@ function createStyles(colors: ThemeColors) {
     list: { flex: 1, padding: 12 },
     empty: { color: colors.textMuted, textAlign: 'center', marginTop: 24 },
     bubble: { maxWidth: '85%', padding: 10, borderRadius: 12, marginBottom: 8 },
-    bubbleMine: { alignSelf: 'flex-end', backgroundColor: colors.success },
+    bubbleMine: {
+      alignSelf: 'flex-end',
+      backgroundColor: colors.chipOn,
+      borderWidth: 1,
+      borderColor: colors.primaryMuted,
+    },
     bubbleOther: {
       alignSelf: 'flex-start',
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    textMine: { color: colors.onPrimary },
+    textMine: { color: colors.text },
     textOther: { color: colors.text },
     time: { marginTop: 4, fontSize: 11, color: colors.textMuted },
+    timeMine: { color: colors.link },
     row: {
       flexDirection: 'row',
       padding: 12,
@@ -121,7 +135,15 @@ function createStyles(colors: ThemeColors) {
       borderColor: colors.border,
       color: colors.text,
     },
-    send: { backgroundColor: colors.surfaceMuted, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10 },
-    sendText: { color: colors.onPrimary, fontWeight: '600' },
+    send: {
+      backgroundColor: colors.primary,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 10,
+      justifyContent: 'center',
+    },
+    sendDisabled: { opacity: 0.45 },
+    sendPressed: { opacity: 0.9 },
+    sendText: { color: colors.onPrimary, fontWeight: '700', fontSize: 15 },
   });
 }

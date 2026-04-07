@@ -62,7 +62,7 @@ export function AdminUsersScreen() {
         keyboardType="email-address"
       />
       <Pressable
-        style={styles.addBtn}
+        style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.9 }]}
         onPress={() => {
           const err = addUser({
             name: name || 'Ученик',
@@ -91,6 +91,7 @@ export function AdminUsersScreen() {
         <View key={u.id} style={styles.card}>
           <Text style={styles.name}>{u.name}</Text>
           <Text style={styles.meta}>Логин: {u.login}</Text>
+          <Text style={styles.meta}>Пароль: {u.password}</Text>
           {u.phone && <Text style={styles.meta}>{u.phone}</Text>}
           {u.email && <Text style={styles.meta}>{u.email}</Text>}
           <Text style={styles.meta}>{u.blocked ? 'Заблокирован' : 'Активен'}</Text>
@@ -133,13 +134,14 @@ function createStyles(colors: ThemeColors) {
       color: colors.text,
     },
     addBtn: {
-      backgroundColor: colors.surfaceMuted,
-      paddingVertical: 12,
-      borderRadius: 10,
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 12,
       alignItems: 'center',
+      marginTop: 4,
       marginBottom: 8,
     },
-    addBtnText: { color: colors.onPrimary, fontWeight: '600' },
+    addBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: 12,

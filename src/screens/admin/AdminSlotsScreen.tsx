@@ -7,7 +7,13 @@ import type { Slot } from '../../types';
 import { formatSlotDate } from '../../utils/format';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
-import { addWeeks, getBookingForSlot, startOfWeekMonday } from '../../utils/weekCalendar';
+import {
+  addWeeks,
+  defaultNewSlotStart,
+  getBookingForSlot,
+  snapToTemplateSlotStart,
+  startOfWeekMonday,
+} from '../../utils/weekCalendar';
 
 export function AdminSlotsScreen() {
   const { state, addSlot, addBlockedSlot, removeSlot, setBookingStatus, ensureFreeTemplateSlotsForWeek } =
@@ -32,7 +38,7 @@ export function AdminSlotsScreen() {
 
   const openModal = (kind: 'free' | 'blocked') => {
     setModalKind(kind);
-    setWhen(new Date());
+    setWhen(defaultNewSlotStart());
     setDuration(kind === 'blocked' ? 120 : 90);
     setModal(true);
   };
@@ -89,11 +95,6 @@ export function AdminSlotsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.lead}>
-        Добавляйте свободные окна для записи или закрывайте время (выходной). На занятых слотах видны
-        ученики.
-      </Text>
-
       <View style={styles.actions}>
         <Pressable style={styles.addBtn} onPress={() => openModal('free')}>
           <Text style={styles.addBtnText}>+ Свободный слот</Text>
@@ -140,7 +141,10 @@ export function AdminSlotsScreen() {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={(e, d) => {
                     if (Platform.OS === 'android') setShowPicker(false);
-                    if (Platform.OS === 'ios' && e.type === 'dismissed') setShowPicker(false);
+                    if (e.type === 'dismissed') {
+                      if (Platform.OS === 'ios') setShowPicker(false);
+                      return;
+                    }
                     if (d) setWhen(d);
                   }}
                 />
@@ -170,8 +174,9 @@ export function AdminSlotsScreen() {
               <Pressable
                 style={styles.save}
                 onPress={() => {
-                  if (modalKind === 'free') addSlot(when, duration);
-                  else addBlockedSlot(when, duration);
+                  const start = snapToTemplateSlotStart(when);
+                  if (modalKind === 'free') addSlot(start, duration);
+                  else addBlockedSlot(start, duration);
                   setModal(false);
                 }}
               >
@@ -189,12 +194,11 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, paddingBottom: 32 },
-    lead: { fontSize: 13, color: colors.textSecondary, marginBottom: 12, lineHeight: 18 },
     actions: { flexDirection: 'row', gap: 10, marginBottom: 12, flexWrap: 'wrap' },
     addBtn: {
       flex: 1,
       minWidth: 140,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.primary,
       paddingVertical: 12,
       borderRadius: 10,
       alignItems: 'center',
@@ -203,12 +207,12 @@ function createStyles(colors: ThemeColors) {
     blockBtn: {
       flex: 1,
       minWidth: 140,
-      backgroundColor: '#1984ED',
+      backgroundColor: colors.link,
       paddingVertical: 12,
       borderRadius: 10,
       alignItems: 'center',
     },
-    blockBtnText: { color: '#ffffff', fontWeight: '700' },
+    blockBtnText: { color: colors.onPrimary, fontWeight: '700' },
     weekNav: {
       flexDirection: 'row',
       alignItems: 'center',

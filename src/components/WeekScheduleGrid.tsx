@@ -21,6 +21,34 @@ const HOURS = Array.from(
 
 const GRID_HEIGHT = (GRID_HOUR_END - GRID_HOUR_START + 1) * HOUR_ROW_PX;
 
+/** Меньше — рисуется раньше (ниже). Закрытые/занятые — поверх свободных. */
+function slotPaintOrder(slot: Slot): number {
+  switch (slot.status) {
+    case 'free':
+      return 0;
+    case 'completed':
+      return 1;
+    case 'pending':
+    case 'booked':
+      return 2;
+    case 'blocked':
+      return 4;
+    case 'cancelled':
+      return 1;
+    default:
+      return 2;
+  }
+}
+
+function slotZIndex(slot: Slot, booking: Booking | undefined): number {
+  if (slot.status === 'blocked') return 50;
+  if (slot.status === 'pending' || slot.status === 'booked') return 40;
+  if (slot.status === 'completed') return 25;
+  if (slot.status === 'free') return 1;
+  if (booking && booking.status !== 'cancelled') return 35;
+  return 15;
+}
+
 type Props = {
   weekStartMonday: Date;
   slots: Slot[];
@@ -53,7 +81,12 @@ export function WeekScheduleGrid({
   const days = getWeekDayDates(weekStartMonday);
 
   const weekSlots = slots.filter((s) => slotOverlapsWeek(s, weekStartMonday));
-  const sorted = [...weekSlots].sort((a, b) => a.startIso.localeCompare(b.startIso));
+  const sorted = [...weekSlots].sort((a, b) => {
+    const pa = slotPaintOrder(a);
+    const pb = slotPaintOrder(b);
+    if (pa !== pb) return pa - pb;
+    return a.startIso.localeCompare(b.startIso);
+  });
 
   const monthTitle = weekStartMonday.toLocaleDateString('ru-RU', {
     month: 'long',
@@ -130,6 +163,8 @@ export function WeekScheduleGrid({
                     slot.status === 'free' ||
                     (isMinePending && !!onPressOwnPending);
 
+                  const zi = slotZIndex(slot, booking);
+                  const elevation = zi >= 50 ? 8 : zi >= 40 ? 6 : zi >= 25 ? 4 : zi > 1 ? 2 : 0;
                   const boxStyle = [
                     styles.slotBlock,
                     {
@@ -137,6 +172,8 @@ export function WeekScheduleGrid({
                       height: layout.height,
                       backgroundColor: bg,
                       borderColor: border,
+                      zIndex: zi,
+                      elevation,
                     },
                   ];
 
@@ -191,14 +228,11 @@ function slotAppearance(
   isMinePending: boolean,
   colors: ThemeColors,
 ): { bg: string; border: string; label: string; text: string } {
-  const sky = '#52b2e8';
-  const cta = colors.primary;
-
   if (slot.status === 'blocked') {
     return {
-      bg: 'rgba(15, 23, 42, 0.07)',
-      border: colors.border,
-      text: colors.textSecondary,
+      bg: 'rgba(100, 116, 139, 0.32)',
+      border: '#64748b',
+      text: '#1e293b',
       label: mode === 'admin' ? 'Закрыто' : 'Занято',
     };
   }
@@ -220,7 +254,7 @@ function slotAppearance(
       };
     }
     return {
-      bg: 'rgba(28, 143, 217, 0.15)',
+      bg: 'rgba(28, 143, 217, 0.14)',
       border: colors.borderSubtle,
       text: colors.textMuted,
       label: 'Занято',
@@ -229,23 +263,23 @@ function slotAppearance(
   if (booking && (slot.status === 'pending' || slot.status === 'booked')) {
     const name = getStudentName(booking.userId, users);
     return {
-      bg: sky,
-      border: cta,
+      bg: colors.primary,
+      border: colors.link,
       text: '#FFFFFF',
       label: slot.status === 'pending' ? `${name} (ожид.)` : name,
     };
   }
   if (slot.status === 'completed') {
     return {
-      bg: 'rgba(28, 143, 217, 0.12)',
-      border: '#64748B',
-      text: colors.textMuted,
+      bg: 'rgba(15, 157, 138, 0.14)',
+      border: colors.success,
+      text: colors.textSecondary,
       label: 'Завершено',
     };
   }
   return {
-    bg: 'rgba(28, 143, 217, 0.14)',
-    border: '#94A3B8',
+    bg: colors.surfaceMuted,
+    border: colors.border,
     text: colors.text,
     label: slot.status,
   };
@@ -271,12 +305,12 @@ function createGridStyles(colors: ThemeColors) {
     dayCol: {
       position: 'relative',
       borderLeftWidth: 1,
-      borderColor: 'rgba(15, 23, 42, 0.08)',
-      backgroundColor: 'rgba(15, 23, 42, 0.03)',
+      borderColor: 'rgba(28, 143, 217, 0.12)',
+      backgroundColor: 'rgba(28, 143, 217, 0.035)',
     },
     gridLine: {
       borderBottomWidth: 1,
-      borderColor: 'rgba(28, 143, 217, 0.18)',
+      borderColor: 'rgba(28, 143, 217, 0.11)',
     },
     slotBlock: {
       position: 'absolute',
@@ -286,7 +320,6 @@ function createGridStyles(colors: ThemeColors) {
       borderWidth: 1,
       padding: 4,
       overflow: 'hidden',
-      zIndex: 2,
     },
     slotBlockFree: {
       justifyContent: 'center',

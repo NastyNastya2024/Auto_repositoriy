@@ -1,4 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -28,6 +30,29 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const StudentTabs = createBottomTabNavigator();
 const AdminTabs = createBottomTabNavigator();
 const AdminChatStack = createNativeStackNavigator<AdminChatStackParamList>();
+
+/** Подпись в 2 строки без «…», т.к. стандартный Label в react-navigation с numberOfLines={1}. */
+function adminTabBarLabel(title: string) {
+  return function AdminTabBarLabel({ color }: { color: string }) {
+    return (
+      <Text
+        style={{
+          color,
+          fontSize: 11,
+          fontWeight: '600',
+          textAlign: 'center',
+          lineHeight: 14,
+          marginTop: 2,
+          paddingHorizontal: 1,
+        }}
+        numberOfLines={2}
+        ellipsizeMode="clip"
+      >
+        {title}
+      </Text>
+    );
+  };
+}
 
 function LogoutHeaderButton() {
   const { logout } = useApp();
@@ -163,43 +188,91 @@ function StudentNavigator() {
       <StudentTabs.Screen
         name="Calendar"
         component={StudentCalendarScreen}
-        options={{ title: 'Календарь', tabBarLabel: 'Календарь' }}
+        options={{
+          title: 'Календарь',
+          tabBarLabel: 'Календарь',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar-outline" size={STUDENT_TAB_ICON} color={color} />
+          ),
+        }}
       />
       <StudentTabs.Screen
         name="MyBookings"
         component={StudentMyBookingsScreen}
-        options={{ title: 'Мои заявки', tabBarLabel: 'Заявки' }}
+        options={{
+          title: 'Мои заявки',
+          tabBarLabel: 'Заявки',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="clipboard-outline" size={STUDENT_TAB_ICON} color={color} />
+          ),
+        }}
       />
       <StudentTabs.Screen
         name="Tariffs"
         component={StudentTariffsScreen}
-        options={{ title: 'Тарифы', tabBarLabel: 'Тарифы' }}
+        options={{
+          title: 'Тарифы',
+          tabBarLabel: 'Тарифы',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="pricetag-outline" size={STUDENT_TAB_ICON} color={color} />
+          ),
+        }}
       />
       <StudentTabs.Screen
         name="PDD"
         component={StudentPddScreen}
-        options={{ title: 'ПДД', tabBarLabel: 'ПДД' }}
+        options={{
+          title: 'ПДД',
+          tabBarLabel: 'ПДД',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="book-outline" size={STUDENT_TAB_ICON} color={color} />
+          ),
+        }}
       />
       <StudentTabs.Screen
         name="Chat"
         component={StudentChatScreen}
-        options={{ title: 'Чат', tabBarLabel: 'Чат' }}
+        options={{
+          title: 'Чат',
+          tabBarLabel: 'Чат',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="chatbubbles-outline" size={STUDENT_TAB_ICON} color={color} />
+          ),
+        }}
       />
     </StudentTabs.Navigator>
   );
 }
 
+const ADMIN_TAB_ICON = 22;
+const STUDENT_TAB_ICON = 22;
+
+/** Зона под иконку + двухстрочную подпись (высота без учёта safe area снизу). */
+const ADMIN_TAB_BAR_INNER = 58;
+
 function AdminNavigator() {
   const { tabScreenOptions } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = ADMIN_TAB_BAR_INNER + insets.bottom;
+
   return (
-    <AdminTabs.Navigator screenOptions={tabScreenOptions}>
+    <AdminTabs.Navigator
+      screenOptions={{
+        ...tabScreenOptions,
+        tabBarStyle: [tabScreenOptions.tabBarStyle, { height: tabBarHeight }],
+        tabBarItemStyle: { paddingTop: 4, paddingBottom: 2 },
+      }}
+    >
       <AdminTabs.Screen
         name="Slots"
         component={AdminSlotsScreen}
         options={{
           title: 'Слоты',
-          tabBarLabel: 'Слоты',
+          tabBarLabel: adminTabBarLabel('Слоты'),
           headerRight: () => <SessionHeaderRight />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
       <AdminTabs.Screen
@@ -207,8 +280,11 @@ function AdminNavigator() {
         component={AdminBookingsScreen}
         options={{
           title: 'Записи',
-          tabBarLabel: 'Записи',
+          tabBarLabel: adminTabBarLabel('Записи'),
           headerRight: () => <SessionHeaderRight />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="clipboard-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
       <AdminTabs.Screen
@@ -216,8 +292,11 @@ function AdminNavigator() {
         component={AdminTariffsScreen}
         options={{
           title: 'Тарифы',
-          tabBarLabel: 'Тарифы',
+          tabBarLabel: adminTabBarLabel('Тарифы'),
           headerRight: () => <SessionHeaderRight />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="pricetag-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
       <AdminTabs.Screen
@@ -225,8 +304,11 @@ function AdminNavigator() {
         component={AdminRegistrationRequestsScreen}
         options={{
           title: 'Заявки',
-          tabBarLabel: 'Заявки',
+          tabBarLabel: adminTabBarLabel('Заявки'),
           headerRight: () => <SessionHeaderRight />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="mail-unread-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
       <AdminTabs.Screen
@@ -234,8 +316,11 @@ function AdminNavigator() {
         component={AdminUsersScreen}
         options={{
           title: 'Ученики',
-          tabBarLabel: 'Ученики',
+          tabBarLabel: adminTabBarLabel('Ученики'),
           headerRight: () => <SessionHeaderRight />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="people-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
       <AdminTabs.Screen
@@ -243,8 +328,11 @@ function AdminNavigator() {
         component={AdminChatNavigator}
         options={{
           title: 'Чаты',
-          tabBarLabel: 'Чаты',
+          tabBarLabel: adminTabBarLabel('Чаты'),
           headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="chatbubbles-outline" size={ADMIN_TAB_ICON} color={color} />
+          ),
         }}
       />
     </AdminTabs.Navigator>
@@ -258,7 +346,7 @@ export function RootNavigator() {
   if (!ready) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator size="large" color={colors.primaryMuted} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }

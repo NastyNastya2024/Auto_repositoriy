@@ -14,7 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import type { Tariff, TariffType } from '../../types';
 import type { ThemeColors } from '../../theme';
 import { createId } from '../../utils/id';
-import { formatRub } from '../../utils/format';
+import { TariffCard } from '../../components/TariffCard';
 
 const TYPES: TariffType[] = ['trial', 'route', 'package', 'full', 'after_exam'];
 
@@ -48,27 +48,19 @@ export function AdminTariffsScreen() {
         <Text style={styles.addBtnText}>+ Новый тариф</Text>
       </Pressable>
       {state.tariffs.map((t) => (
-        <View key={t.id} style={styles.card}>
-          <Text style={styles.badge}>{tariffTypeLabel(t.type)}</Text>
-          <Text style={styles.title}>{t.name}</Text>
-          <Text style={styles.meta}>{formatRub(t.priceRub)} · {t.active ? 'активен' : 'выкл'}</Text>
-          <View style={styles.row}>
-            <Pressable style={styles.linkBtn} onPress={() => openEdit(t)}>
-              <Text style={styles.linkBtnText}>Изменить</Text>
-            </Pressable>
-            <Pressable
-              style={styles.danger}
-              onPress={() =>
-                Alert.alert('Удалить тариф?', t.name, [
-                  { text: 'Отмена', style: 'cancel' },
-                  { text: 'Удалить', style: 'destructive', onPress: () => removeTariff(t.id) },
-                ])
-              }
-            >
-              <Text style={styles.dangerText}>Удалить</Text>
-            </Pressable>
-          </View>
-        </View>
+        <TariffCard
+          key={t.id}
+          tariff={t}
+          colors={colors}
+          compact
+          onEdit={() => openEdit(t)}
+          onDelete={() =>
+            Alert.alert('Удалить тариф?', t.name, [
+              { text: 'Отмена', style: 'cancel' },
+              { text: 'Удалить', style: 'destructive', onPress: () => removeTariff(t.id) },
+            ])
+          }
+        />
       ))}
 
       <Modal visible={open} animationType="slide" transparent>
@@ -123,6 +115,18 @@ export function AdminTariffsScreen() {
                     })
                   }
                 />
+                <Text style={styles.label}>Длительность (мин), опционально</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="number-pad"
+                  value={editing.durationMin != null ? String(editing.durationMin) : ''}
+                  onChangeText={(v) =>
+                    setEditing({
+                      ...editing,
+                      durationMin: v ? Number(v) : undefined,
+                    })
+                  }
+                />
                 <Pressable
                   style={styles.toggle}
                   onPress={() => setEditing({ ...editing, active: !editing.active })}
@@ -157,29 +161,13 @@ function createStyles(colors: ThemeColors) {
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, paddingBottom: 32 },
     addBtn: {
-      backgroundColor: colors.surfaceMuted,
-      paddingVertical: 12,
-      borderRadius: 10,
-      alignItems: 'center',
-      marginBottom: 14,
-    },
-    addBtnText: { color: colors.onPrimary, fontWeight: '700' },
-    card: {
-      backgroundColor: colors.surface,
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
       borderRadius: 12,
-      padding: 14,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
+      alignItems: 'center',
+      marginBottom: 16,
     },
-    badge: { fontSize: 12, color: colors.link, fontWeight: '600' },
-    title: { fontSize: 16, fontWeight: '700', marginTop: 4, color: colors.text },
-    meta: { marginTop: 4, color: colors.textMuted },
-    row: { flexDirection: 'row', gap: 12, marginTop: 10 },
-    linkBtn: { paddingVertical: 6 },
-    linkBtnText: { color: colors.link, fontWeight: '600' },
-    danger: { paddingVertical: 6 },
-    dangerText: { color: colors.dangerText, fontWeight: '600' },
+    addBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
     modalBg: {
       flex: 1,
       backgroundColor: colors.overlay,
