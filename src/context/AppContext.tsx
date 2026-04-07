@@ -526,6 +526,8 @@ export function useApp() {
 
 export function tariffTypeLabel(type: TariffType): string {
   switch (type) {
+    case 'trial':
+      return 'Пробное занятие';
     case 'route':
       return 'Разовый маршрут';
     case 'package':

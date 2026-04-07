@@ -49,7 +49,7 @@ export interface Booking {
   createdAt: string;
 }
 
-export type TariffType = 'route' | 'package' | 'full' | 'after_exam';
+export type TariffType = 'trial' | 'route' | 'package' | 'full' | 'after_exam';
 
 export interface Tariff {
   id: string;
@@ -96,7 +96,7 @@ export interface PddProgress {
 }
 
 export interface AppState {
-  version: 2;
+  version: 3;
   sessionUserId: string | null;
   users: User[];
   registrationRequests: RegistrationRequest[];

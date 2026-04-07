@@ -16,7 +16,7 @@ import type { ThemeColors } from '../../theme';
 import { createId } from '../../utils/id';
 import { formatRub } from '../../utils/format';
 
-const TYPES: TariffType[] = ['route', 'package', 'full', 'after_exam'];
+const TYPES: TariffType[] = ['trial', 'route', 'package', 'full', 'after_exam'];
 
 export function AdminTariffsScreen() {
   const { state, upsertTariff, removeTariff } = useApp();

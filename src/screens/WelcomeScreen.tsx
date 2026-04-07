@@ -127,8 +127,8 @@ export function WelcomeScreen() {
               <View style={styles.cardBody}>
                 <Text style={styles.roleLabel}>Инструктор</Text>
                 <Text style={styles.name}>Эдуард Н.</Text>
+                <Text style={styles.experience}>Стаж 23 года</Text>
                 <Text style={styles.phone}>8 903 252-52-32</Text>
-                <Text style={styles.carModel}>Skoda Octavia</Text>
               </View>
             </View>
 
@@ -268,6 +268,12 @@ function createStyles(screenWidth: number) {
       fontSize: 20,
       fontWeight: '700',
       color: TEXT,
+      marginBottom: 4,
+    },
+    experience: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: MUTED,
       marginBottom: 6,
     },
     phone: {
@@ -276,10 +282,6 @@ function createStyles(screenWidth: number) {
       color: ACCENT,
       marginBottom: 6,
       letterSpacing: 0.3,
-    },
-    carModel: {
-      fontSize: 16,
-      color: TEXT,
     },
     cta: {
       backgroundColor: ACCENT,

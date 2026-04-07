@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AppState, RegistrationRequest, User } from '../types';
 import { ADMIN_ID, ADMIN_LOGIN, ADMIN_PASSWORD, initialState } from '../data/seed';
 
-const KEY = 'driving-school-local-v2';
+const KEY = 'driving-school-local-v3';
+const LEGACY_KEY_V2 = 'driving-school-local-v2';
 
 function migrateV1ToV2(raw: Record<string, unknown>): AppState {
   const oldUsers = (raw.users as Partial<User>[]) || [];
@@ -44,13 +45,13 @@ function migrateV1ToV2(raw: Record<string, unknown>): AppState {
   }
 
   return {
-    version: 2,
+    version: 3,
     sessionUserId: (raw.sessionUserId as string | null) ?? null,
     users,
     registrationRequests: [] as RegistrationRequest[],
     slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
     bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
-    tariffs: Array.isArray(raw.tariffs) ? raw.tariffs : initialState.tariffs,
+    tariffs: initialState.tariffs,
     messages: Array.isArray(raw.messages) ? raw.messages : [],
     payments: Array.isArray(raw.payments) ? raw.payments : [],
     pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],
@@ -78,7 +79,36 @@ function normalize(raw: Record<string, unknown> | null): AppState {
       };
     });
     return {
-      version: 2,
+      version: 3,
+      sessionUserId: (raw.sessionUserId as string | null) ?? null,
+      users: withLogin,
+      registrationRequests: Array.isArray(raw.registrationRequests)
+        ? raw.registrationRequests
+        : [],
+      slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
+      bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
+      tariffs: initialState.tariffs,
+      messages: Array.isArray(raw.messages) ? raw.messages : [],
+      payments: Array.isArray(raw.payments) ? raw.payments : [],
+      pddProgress: Array.isArray(raw.pddProgress) ? raw.pddProgress : [],
+    };
+  }
+
+  if (raw.version === 3) {
+    const users = (raw.users as User[]) || initialState.users;
+    const withLogin = users.map((u) => {
+      if (u.login && u.password) return u;
+      if (u.id === ADMIN_ID) {
+        return { ...u, login: ADMIN_LOGIN, password: ADMIN_PASSWORD };
+      }
+      return {
+        ...u,
+        login: u.login || `user_${u.id.slice(-6)}`,
+        password: u.password || 'changeme',
+      };
+    });
+    return {
+      version: 3,
       sessionUserId: (raw.sessionUserId as string | null) ?? null,
       users: withLogin,
       registrationRequests: Array.isArray(raw.registrationRequests)
@@ -99,6 +129,15 @@ function normalize(raw: Record<string, unknown> | null): AppState {
 export async function loadState(): Promise<AppState> {
   try {
     let raw = await AsyncStorage.getItem(KEY);
+    if (!raw) {
+      raw = await AsyncStorage.getItem(LEGACY_KEY_V2);
+      if (raw) {
+        const parsed = normalize(JSON.parse(raw) as Record<string, unknown>);
+        await AsyncStorage.setItem(KEY, JSON.stringify(parsed));
+        await AsyncStorage.removeItem(LEGACY_KEY_V2);
+        return parsed;
+      }
+    }
     if (!raw) {
       raw = await AsyncStorage.getItem('driving-school-local-v1');
       if (raw) {

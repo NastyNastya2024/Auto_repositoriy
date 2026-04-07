@@ -51,9 +51,39 @@ function AuthLoginHeaderButton() {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   return (
-    <Pressable onPress={() => navigation.navigate('Login')} hitSlop={10}>
+    <Pressable
+      onPress={() => navigation.navigate('Login')}
+      hitSlop={10}
+      style={styles.authHeaderLoginBtn}
+    >
       <Text style={{ color: colors.link, fontWeight: '700', fontSize: 16 }}>Войти</Text>
     </Pressable>
+  );
+}
+
+function HomeMainHeaderTitle() {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+      <Text
+        style={{ fontSize: 17, fontWeight: '800', color: colors.text }}
+        numberOfLines={1}
+      >
+        Автоинструктор
+      </Text>
+      <View
+        style={{
+          backgroundColor: colors.primary,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: colors.onPrimary, fontWeight: '800', fontSize: 12, letterSpacing: 0.5 }}>
+          АКПП
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -80,8 +110,9 @@ function AuthNavigator() {
         name="HomeMain"
         component={HomeMainScreen}
         options={{
-          title: 'Главная',
           headerBackTitle: 'Назад',
+          headerTitleAlign: 'left',
+          headerTitle: () => <HomeMainHeaderTitle />,
           headerRight: () => <AuthLoginHeaderButton />,
         }}
       />
@@ -255,4 +286,7 @@ export function RootNavigator() {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  authHeaderLoginBtn: {
+    paddingRight: 16,
+  },
 });
