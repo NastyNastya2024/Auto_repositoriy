@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -29,6 +29,9 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const StudentTabs = createBottomTabNavigator();
 const AdminTabs = createBottomTabNavigator();
 const AdminChatStack = createNativeStackNavigator<AdminChatStackParamList>();
+
+const WEB_CONTENT_MAX_WIDTH = 1040;
+const WEB_CONTENT_PADDING = 18;
 
 /** Подпись в 2 строки без «…», т.к. стандартный Label в react-navigation с numberOfLines={1}. */
 function adminTabBarLabel(title: string) {
@@ -181,6 +184,11 @@ const STUDENT_TAB_BAR_INNER = 72;
 function StudentNavigator() {
   const { tabScreenOptions } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isWebDesktop = width >= 900;
+  const isWeb = Platform.OS === 'web';
+  const tabScale = isWeb ? 1.15 : 1;
+  const studentIconSize = Math.round(STUDENT_TAB_ICON * tabScale);
 
   return (
     <StudentTabs.Navigator
@@ -189,13 +197,24 @@ function StudentNavigator() {
         tabBarStyle: [
           tabScreenOptions.tabBarStyle,
           {
-            minHeight: STUDENT_TAB_BAR_INNER + insets.bottom,
+            minHeight: Math.round(STUDENT_TAB_BAR_INNER * tabScale) + insets.bottom,
             paddingBottom: insets.bottom,
-            paddingTop: 6,
+            paddingTop: Math.round(6 * tabScale),
+            ...(isWebDesktop
+              ? ({
+                  alignSelf: 'center',
+                  width: '100%',
+                  maxWidth: WEB_CONTENT_MAX_WIDTH,
+                } as const)
+              : null),
           },
         ],
         tabBarItemStyle: { paddingTop: 0, paddingBottom: 0 },
         headerRight: () => <SessionHeaderRight />,
+        tabBarLabelStyle: [
+          tabScreenOptions.tabBarLabelStyle,
+          isWeb ? ({ fontSize: 13, lineHeight: 18 } as const) : null,
+        ],
       }}
     >
       <StudentTabs.Screen
@@ -205,7 +224,7 @@ function StudentNavigator() {
           title: 'Календарь',
           tabBarLabel: 'Календарь',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar-outline" size={STUDENT_TAB_ICON} color={color} />
+            <Ionicons name="calendar-outline" size={studentIconSize} color={color} />
           ),
         }}
       />
@@ -216,7 +235,7 @@ function StudentNavigator() {
           title: 'Уроки',
           tabBarLabel: 'Уроки',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="clipboard-outline" size={STUDENT_TAB_ICON} color={color} />
+            <Ionicons name="clipboard-outline" size={studentIconSize} color={color} />
           ),
         }}
       />
@@ -227,7 +246,7 @@ function StudentNavigator() {
           title: 'Тарифы',
           tabBarLabel: 'Тарифы',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="pricetag-outline" size={STUDENT_TAB_ICON} color={color} />
+            <Ionicons name="pricetag-outline" size={studentIconSize} color={color} />
           ),
         }}
       />
@@ -238,7 +257,7 @@ function StudentNavigator() {
           title: 'Чат',
           tabBarLabel: 'Чат',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="chatbubbles-outline" size={STUDENT_TAB_ICON} color={color} />
+            <Ionicons name="chatbubbles-outline" size={studentIconSize} color={color} />
           ),
         }}
       />
@@ -255,14 +274,36 @@ const ADMIN_TAB_BAR_INNER = 58;
 function AdminNavigator() {
   const { tabScreenOptions } = useTheme();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = ADMIN_TAB_BAR_INNER + insets.bottom;
+  const { width } = useWindowDimensions();
+  const isWebDesktop = width >= 900;
+  const isWeb = Platform.OS === 'web';
+  const tabScale = isWeb ? 1.2 : 1;
+  const adminIconSize = Math.round(ADMIN_TAB_ICON * tabScale);
+  const tabBarHeight = Math.round(ADMIN_TAB_BAR_INNER * tabScale) + insets.bottom;
 
   return (
     <AdminTabs.Navigator
       screenOptions={{
         ...tabScreenOptions,
-        tabBarStyle: [tabScreenOptions.tabBarStyle, { height: tabBarHeight }],
+        tabBarStyle: [
+          tabScreenOptions.tabBarStyle,
+          {
+            height: tabBarHeight,
+            paddingTop: isWeb ? 6 : undefined,
+            ...(isWebDesktop
+              ? ({
+                  alignSelf: 'center',
+                  width: '100%',
+                  maxWidth: WEB_CONTENT_MAX_WIDTH,
+                } as const)
+              : null),
+          },
+        ],
         tabBarItemStyle: { paddingTop: 4, paddingBottom: 2 },
+        tabBarLabelStyle: [
+          tabScreenOptions.tabBarLabelStyle,
+          isWeb ? ({ fontSize: 12, lineHeight: 16 } as const) : null,
+        ],
       }}
     >
       <AdminTabs.Screen
@@ -273,7 +314,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Слоты'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="calendar-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="calendar-outline" size={adminIconSize} color={color} />
           ),
         }}
       />
@@ -285,7 +326,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Записи'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="clipboard-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="clipboard-outline" size={adminIconSize} color={color} />
           ),
         }}
       />
@@ -297,7 +338,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Тарифы'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="pricetag-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="pricetag-outline" size={adminIconSize} color={color} />
           ),
         }}
       />
@@ -309,7 +350,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Заявки'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="mail-unread-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="mail-unread-outline" size={adminIconSize} color={color} />
           ),
         }}
       />
@@ -321,7 +362,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Ученики'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="people-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="people-outline" size={adminIconSize} color={color} />
           ),
         }}
       />
@@ -333,7 +374,7 @@ function AdminNavigator() {
           tabBarLabel: adminTabBarLabel('Чаты'),
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="chatbubbles-outline" size={ADMIN_TAB_ICON} color={color} />
+            <Ionicons name="chatbubbles-outline" size={adminIconSize} color={color} />
           ),
         }}
       />

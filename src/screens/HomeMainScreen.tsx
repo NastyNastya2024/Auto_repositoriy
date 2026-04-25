@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import {
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -35,11 +36,15 @@ export function HomeMainScreen() {
   const { state } = useApp();
   const { colors } = useTheme();
   const { width: winW, height: winH } = useWindowDimensions();
+  const isWebDesktop = Platform.OS === 'web' && winW >= 900;
   /** Смещение фото вниз: сверху видна заливка «неба». */
-  const carImageTop = Math.round(Math.min(140, Math.max(64, winH * 0.1)));
+  const carImageTopBase = Math.round(Math.min(140, Math.max(64, winH * 0.1)));
+  // На web поднимаем фон выше и даём запас по высоте, чтобы не было пустот.
+  const carImageTop = Math.max(0, carImageTopBase - (Platform.OS === 'web' ? 56 : 0));
+  const carImageExtraH = Platform.OS === 'web' ? 90 : 0;
   const insets = useSafeAreaInsets();
   const tariffs = useMemo(() => state.tariffs.filter((t) => t.active), [state.tariffs]);
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isWebDesktop), [colors, isWebDesktop]);
   const scrollBottomPad = 28;
   const scrollPad = 16;
   const tariffsSectionInnerW = winW - scrollPad * 2 - 16 * 2;
@@ -50,7 +55,7 @@ export function HomeMainScreen() {
     <View style={[styles.screen, { paddingBottom: insets.bottom, backgroundColor: colors.bg }]}>
       <Image
         source={CAR_IMG}
-        style={[styles.screenBgImage, { width: winW, height: winH, top: carImageTop }]}
+        style={[styles.screenBgImage, { width: winW, height: winH + carImageExtraH, top: carImageTop }]}
         resizeMode="cover"
       />
       <ScrollView
@@ -60,50 +65,52 @@ export function HomeMainScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.scrollTopMask}>
-          <View style={styles.card}>
-            <View style={styles.instructorBlock}>
-              <View
-                style={[styles.instructorSpeechBand, instructorStacked && styles.instructorSpeechBandStacked]}
-              >
-                <View style={[styles.avatarColumn, instructorStacked && styles.avatarColumnStacked]}>
-                  <View style={styles.avatarRing}>
-                    <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
-                  </View>
-                </View>
-                <View style={[styles.speechArea, instructorStacked && styles.speechAreaStacked]}>
-                  <View style={styles.instructorBody}>
-                    <Text style={styles.roleLabel}>Инструктор</Text>
-                    <Text style={styles.name}>Эдуард Н.</Text>
-                    <View style={styles.instructorMetaBlock}>
-                      <Text style={styles.experienceLine}>Стаж 23 года ·</Text>
-                      <Text style={styles.experienceLine}>Обучение на АКПП</Text>
+          <View style={styles.webTopRow}>
+            <View style={[styles.card, styles.webTopCol]}>
+              <View style={styles.instructorBlock}>
+                <View
+                  style={[styles.instructorSpeechBand, instructorStacked && styles.instructorSpeechBandStacked]}
+                >
+                  <View style={[styles.avatarColumn, instructorStacked && styles.avatarColumnStacked]}>
+                    <View style={styles.avatarRing}>
+                      <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
                     </View>
-                    <Text style={styles.phone}>8 903 252-52-32</Text>
+                  </View>
+                  <View style={[styles.speechArea, instructorStacked && styles.speechAreaStacked]}>
+                    <View style={styles.instructorBody}>
+                      <Text style={styles.roleLabel}>Инструктор</Text>
+                      <Text style={styles.name}>Эдуард Н.</Text>
+                      <View style={styles.instructorMetaBlock}>
+                        <Text style={styles.experienceLine}>Стаж 23 года ·</Text>
+                        <Text style={styles.experienceLine}>Обучение на АКПП</Text>
+                      </View>
+                      <Text style={styles.phone}>8 903 252-52-32</Text>
+                    </View>
                   </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.examBanner}>
-            <View style={styles.examBannerHeader}>
-              <Text style={styles.examTitle}>Полный пакет документов</Text>
-              <View style={styles.examTag}>
-                <Text style={styles.examTagText}>как у автошколы</Text>
-              </View>
-            </View>
-            <View style={styles.examBulletList}>
-              {DOC_PACK_BULLETS.map((line, i) => (
-                <View key={i} style={styles.examBulletRow}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={22}
-                    color={colors.success}
-                    style={styles.examBulletIcon}
-                  />
-                  <Text style={styles.examBulletText}>{line}</Text>
+            <View style={[styles.examBanner, styles.webTopCol]}>
+              <View style={styles.examBannerHeader}>
+                <Text style={styles.examTitle}>Полный пакет документов</Text>
+                <View style={styles.examTag}>
+                  <Text style={styles.examTagText}>как у автошколы</Text>
                 </View>
-              ))}
+              </View>
+              <View style={styles.examBulletList}>
+                {DOC_PACK_BULLETS.map((line, i) => (
+                  <View key={i} style={styles.examBulletRow}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={colors.success}
+                      style={styles.examBulletIcon}
+                    />
+                    <Text style={styles.examBulletText}>{line}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
 
@@ -156,7 +163,10 @@ export function HomeMainScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors) {
+function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
+  const s = isWebDesktop ? 1.12 : 1;
+  const px = (n: number) => Math.round(n * s);
+
   return StyleSheet.create({
     screen: {
       flex: 1,
@@ -178,24 +188,33 @@ function createStyles(colors: ThemeColors) {
       flexGrow: 1,
     },
     scrollTopMask: {
-      paddingHorizontal: 16,
-      paddingTop: 6,
+      paddingHorizontal: isWebDesktop ? 24 : 16,
+      paddingTop: isWebDesktop ? 16 : 6,
       backgroundColor: 'transparent',
+    },
+    webTopRow: {
+      flexDirection: isWebDesktop ? 'row' : 'column',
+      alignItems: 'stretch',
+      gap: isWebDesktop ? 18 : 12,
+    },
+    webTopCol: {
+      flex: isWebDesktop ? 1 : undefined,
+      marginBottom: isWebDesktop ? 0 : undefined,
     },
     carOverPhoto: {
       alignSelf: 'stretch',
       width: '100%',
       justifyContent: 'flex-start',
       alignItems: 'stretch',
-      paddingHorizontal: 16,
+      paddingHorizontal: isWebDesktop ? 24 : 16,
       paddingTop: 0,
     },
     card: {
       backgroundColor: colors.surface,
-      borderRadius: 20,
-      paddingVertical: 22,
-      paddingHorizontal: 20,
-      marginBottom: 12,
+      borderRadius: px(20),
+      paddingVertical: px(22),
+      paddingHorizontal: px(20),
+      marginBottom: isWebDesktop ? 18 : 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       shadowColor: '#0f2133',
@@ -220,7 +239,7 @@ function createStyles(colors: ThemeColors) {
     avatarColumn: {
       justifyContent: 'center',
       alignItems: 'center',
-      paddingRight: 16,
+      paddingRight: px(16),
     },
     avatarColumnStacked: {
       justifyContent: 'flex-start',
@@ -231,20 +250,20 @@ function createStyles(colors: ThemeColors) {
     speechArea: {
       flex: 1,
       minWidth: 0,
-      paddingLeft: 6,
-      paddingVertical: 2,
+      paddingLeft: px(6),
+      paddingVertical: px(2),
       justifyContent: 'center',
       backgroundColor: colors.surface,
     },
     speechAreaStacked: {
-      marginTop: 16,
+      marginTop: px(16),
       paddingLeft: 0,
       paddingVertical: 0,
       width: '100%',
     },
     /** Круглый аватар поменьше. */
     avatarRing: {
-      padding: 3,
+      padding: px(3),
       borderRadius: 999,
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
@@ -256,9 +275,9 @@ function createStyles(colors: ThemeColors) {
       elevation: 2,
     },
     avatar: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
+      width: px(96),
+      height: px(96),
+      borderRadius: px(48),
       backgroundColor: colors.surfaceMuted,
     },
     instructorBody: {
@@ -270,44 +289,44 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surface,
     },
     instructorMetaBlock: {
-      marginTop: 6,
-      gap: 5,
+      marginTop: px(6),
+      gap: px(5),
     },
     experienceLine: {
-      fontSize: 14,
+      fontSize: px(14),
       fontWeight: '600',
       color: colors.textSecondary,
-      lineHeight: 20,
+      lineHeight: px(20),
     },
     roleLabel: {
-      fontSize: 12,
+      fontSize: px(12),
       fontWeight: '600',
       color: colors.textMuted,
-      marginBottom: 8,
+      marginBottom: px(8),
       letterSpacing: 0.4,
       textTransform: 'uppercase',
     },
     name: {
-      fontSize: 23,
+      fontSize: px(23),
       fontWeight: '800',
       color: colors.text,
-      marginBottom: 6,
+      marginBottom: px(6),
       letterSpacing: -0.25,
     },
     phone: {
-      fontSize: 16,
+      fontSize: px(16),
       fontWeight: '700',
       color: colors.link,
-      marginTop: 10,
+      marginTop: px(10),
       letterSpacing: 0.2,
     },
     /** Карточка «пакет документов»: иконка + заголовок слева, чип, список с зелёными галочками. */
     examBanner: {
       backgroundColor: colors.surface,
-      borderRadius: 20,
-      paddingVertical: 20,
-      paddingHorizontal: 20,
-      marginBottom: 12,
+      borderRadius: px(20),
+      paddingVertical: px(20),
+      paddingHorizontal: px(20),
+      marginBottom: isWebDesktop ? 18 : 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       shadowColor: '#0f2133',
@@ -317,11 +336,11 @@ function createStyles(colors: ThemeColors) {
       elevation: 4,
     },
     examBannerHeader: {
-      marginBottom: 18,
+      marginBottom: px(18),
       alignSelf: 'stretch',
     },
     examTitle: {
-      fontSize: 20,
+      fontSize: px(20),
       fontWeight: '800',
       color: colors.text,
       letterSpacing: -0.35,
@@ -329,16 +348,16 @@ function createStyles(colors: ThemeColors) {
     },
     examTag: {
       alignSelf: 'flex-start',
-      marginTop: 10,
+      marginTop: px(10),
       backgroundColor: colors.chip,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: px(12),
+      paddingVertical: px(6),
       borderRadius: 999,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.primaryMuted,
     },
     examTagText: {
-      fontSize: 13,
+      fontSize: px(13),
       fontWeight: '600',
       color: colors.primary,
       letterSpacing: 0.2,
@@ -346,29 +365,29 @@ function createStyles(colors: ThemeColors) {
     examBulletList: {
       alignSelf: 'stretch',
       width: '100%',
-      gap: 12,
+      gap: px(12),
     },
     examBulletRow: {
       flexDirection: 'row',
       alignItems: 'flex-start',
     },
     examBulletIcon: {
-      marginRight: 10,
+      marginRight: px(10),
       marginTop: 0,
     },
     examBulletText: {
       flex: 1,
-      fontSize: 14,
-      lineHeight: 22,
+      fontSize: px(14),
+      lineHeight: px(22),
       fontWeight: '500',
       color: colors.text,
     },
     tariffsSection: {
       backgroundColor: colors.surface,
-      borderRadius: 20,
-      paddingVertical: 20,
-      paddingHorizontal: 16,
-      marginBottom: 12,
+      borderRadius: px(20),
+      paddingVertical: px(20),
+      paddingHorizontal: px(16),
+      marginBottom: isWebDesktop ? 18 : 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.borderSubtle,
       shadowColor: '#0f2133',
@@ -378,24 +397,24 @@ function createStyles(colors: ThemeColors) {
       elevation: 2,
     },
     sectionTitle: {
-      fontSize: 22,
+      fontSize: px(22),
       fontWeight: '800',
       color: colors.text,
-      marginBottom: 16,
+      marginBottom: px(16),
       letterSpacing: -0.35,
     },
     tariffRow: {
       flexDirection: 'row',
       alignItems: 'stretch',
-      paddingRight: 8,
-      paddingBottom: 4,
+      paddingRight: px(8),
+      paddingBottom: px(4),
     },
     carCardGlass: {
       alignSelf: 'stretch',
       width: '100%',
-      borderRadius: 20,
-      paddingVertical: 26,
-      paddingHorizontal: 22,
+      borderRadius: px(20),
+      paddingVertical: px(26),
+      paddingHorizontal: px(22),
       backgroundColor: colors.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
@@ -406,23 +425,23 @@ function createStyles(colors: ThemeColors) {
       elevation: 4,
     },
     carTitle: {
-      fontSize: 20,
+      fontSize: px(20),
       fontWeight: '800',
       color: colors.text,
-      marginBottom: 8,
+      marginBottom: px(8),
     },
     carSubtitle: {
-      fontSize: 14,
+      fontSize: px(14),
       color: colors.textSecondary,
-      marginBottom: 14,
+      marginBottom: px(14),
     },
     carFacts: {
-      gap: 8,
+      gap: px(8),
     },
     carFact: {
-      fontSize: 13,
+      fontSize: px(13),
       color: colors.textSecondary,
-      lineHeight: 18,
+      lineHeight: px(18),
     },
   });
 }

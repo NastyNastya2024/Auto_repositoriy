@@ -37,10 +37,12 @@ export function WelcomeScreen() {
   const [webSize, setWebSize] = useState({ width: layout.width, height: layout.height });
   const w = Platform.OS === 'web' ? webSize.width : layout.width;
   const h = Platform.OS === 'web' ? webSize.height : layout.height;
+  const isWeb = Platform.OS === 'web';
+  const isWebDesktop = isWeb && w >= 900;
   const screen = Dimensions.get('screen');
   const bgW = Platform.OS === 'web' ? webSize.width : screen.width;
   const bgH = Platform.OS === 'web' ? webSize.height : screen.height;
-  const styles = useMemo(() => createStyles(w), [w]);
+  const styles = useMemo(() => createStyles(w, isWebDesktop), [w, isWebDesktop]);
 
   useEffect(() => {
     applyWebDocumentLightTheme();
@@ -79,10 +81,17 @@ export function WelcomeScreen() {
 
   const rootExtra =
     Platform.OS === 'web'
-      ? { width: '100%' as const, minHeight: h }
+      ? ({ width: '100%' as const, minHeight: h, minWidth: w } as const)
       : { width: bgW, height: bgH };
   const imageExtra: ImageStyle =
-    Platform.OS === 'web' ? { width: '100%', height: h } : { width: bgW, height: bgH };
+    Platform.OS === 'web'
+      ? ({
+          width: w,
+          height: h,
+          minWidth: w,
+          minHeight: h,
+        } as const)
+      : { width: bgW, height: bgH };
 
   return (
     <View style={[styles.root, rootExtra]}>
@@ -147,7 +156,7 @@ export function WelcomeScreen() {
   );
 }
 
-function createStyles(screenWidth: number) {
+function createStyles(screenWidth: number, isWebDesktop: boolean) {
   const titleFontSize = Math.round(Math.min(52, Math.max(38, screenWidth * 0.11)));
 
   return StyleSheet.create({
@@ -183,15 +192,15 @@ function createStyles(screenWidth: number) {
       paddingBottom: 8,
     },
     topBlock: {
-      paddingTop: 28,
-      paddingHorizontal: 16,
+      paddingTop: isWebDesktop ? 22 : 28,
+      paddingHorizontal: isWebDesktop ? 24 : 16,
       alignSelf: 'stretch',
       width: '100%',
       alignItems: 'center',
     },
     headerCluster: {
       flexDirection: 'column',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       maxWidth: '100%',
     },
     spacer: {
@@ -199,11 +208,11 @@ function createStyles(screenWidth: number) {
       minHeight: 16,
     },
     appTitle: {
-      alignSelf: 'flex-start',
+      alignSelf: 'center',
       fontSize: titleFontSize,
       fontWeight: '600',
       color: TEXT,
-      textAlign: 'left',
+      textAlign: 'center',
       letterSpacing: -0.8,
       lineHeight: Math.round(titleFontSize * 1.08),
       marginBottom: 12,
@@ -212,7 +221,7 @@ function createStyles(screenWidth: number) {
       textShadowRadius: 10,
     },
     badge: {
-      alignSelf: 'flex-start',
+      alignSelf: 'center',
       backgroundColor: ACCENT,
       paddingVertical: Math.round(titleFontSize * 0.12),
       paddingHorizontal: Math.round(titleFontSize * 0.32),
@@ -232,7 +241,8 @@ function createStyles(screenWidth: number) {
     },
     card: {
       backgroundColor: '#ffffff',
-      marginHorizontal: 16,
+      marginTop: 0,
+      marginHorizontal: isWebDesktop ? 24 : 16,
       borderRadius: 20,
       padding: 20,
       shadowColor: '#0f2133',
@@ -242,6 +252,13 @@ function createStyles(screenWidth: number) {
       elevation: 6,
       borderWidth: 1,
       borderColor: lightColors.borderSubtle,
+      ...(isWebDesktop
+        ? ({
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: 560,
+          } as const)
+        : null),
     },
     cardRow: {
       flexDirection: 'row',
