@@ -46,6 +46,12 @@ export function LoginScreen() {
           <Text style={{ color: colors.link, fontSize: 17, fontWeight: '600' }}>Назад</Text>
         </Pressable>
       ),
+      headerTitle: '',
+      headerRight: () => (
+        <View style={{ marginRight: Platform.OS === 'ios' ? 12 : 16, paddingVertical: 6 }}>
+          <Text style={{ color: colors.link, fontSize: 17, fontWeight: '600' }}>Вход</Text>
+        </View>
+      ),
     });
   }, [navigation, colors.link]);
 
@@ -86,15 +92,20 @@ export function LoginScreen() {
           textAlign="center"
         />
 
-        <Pressable style={({ pressed }) => [styles.btn, pressed && styles.pressed]} onPress={onSubmit}>
-          <Text style={styles.btnText}>Войти</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.btnSecondary, pressed && styles.pressed]}
-          onPress={() => navigation.navigate('RegisterRequest')}
-        >
-          <Text style={styles.btnTextDark}>Отправить заявку</Text>
-        </Pressable>
+        <View style={styles.actionsRow}>
+          <Pressable
+            style={({ pressed }) => [styles.btn, styles.actionHalf, pressed && styles.pressed]}
+            onPress={onSubmit}
+          >
+            <Text style={styles.btnText}>Войти</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.btnSecondary, styles.actionHalf, pressed && styles.pressed]}
+            onPress={() => navigation.navigate('RegisterRequest')}
+          >
+            <Text style={styles.btnTextDark}>Отправить заявку</Text>
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -122,6 +133,16 @@ function createStyles(colors: ThemeColors) {
       marginBottom: 14,
       fontSize: 16,
       color: colors.text,
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 12,
+      marginTop: 2,
+    },
+    actionHalf: {
+      flex: 1,
+      marginBottom: 0,
     },
     btn: {
       backgroundColor: colors.primary,

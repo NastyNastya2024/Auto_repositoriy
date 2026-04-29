@@ -22,7 +22,7 @@ import type { ThemeColors } from '../theme';
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'HomeMain'>;
 
 const INSTRUCTOR_IMG = require('../../assets/onboarding-instructor.png');
-const CAR_IMG = require('../../assets/onboarding-car.png');
+const CAR_IMG = require('../../assets/hero-car-centered.png');
 
 /** Что даёт «полный пакет документов» — короткие пункты под заголовком. */
 const DOC_PACK_BULLETS: readonly string[] = [
@@ -37,11 +37,7 @@ export function HomeMainScreen() {
   const { colors } = useTheme();
   const { width: winW, height: winH } = useWindowDimensions();
   const isWebDesktop = Platform.OS === 'web' && winW >= 900;
-  /** Смещение фото вниз: сверху видна заливка «неба». */
-  const carImageTopBase = Math.round(Math.min(140, Math.max(64, winH * 0.1)));
-  // На web поднимаем фон выше и даём запас по высоте, чтобы не было пустот.
-  const carImageTop = Math.max(0, carImageTopBase - (Platform.OS === 'web' ? 56 : 0));
-  const carImageExtraH = Platform.OS === 'web' ? 90 : 0;
+  const sectionGap = isWebDesktop ? 18 : 12;
   const insets = useSafeAreaInsets();
   const tariffs = useMemo(() => state.tariffs.filter((t) => t.active), [state.tariffs]);
   const styles = useMemo(() => createStyles(colors, isWebDesktop), [colors, isWebDesktop]);
@@ -55,7 +51,11 @@ export function HomeMainScreen() {
     <View style={[styles.screen, { paddingBottom: insets.bottom, backgroundColor: colors.bg }]}>
       <Image
         source={CAR_IMG}
-        style={[styles.screenBgImage, { width: winW, height: winH + carImageExtraH, top: carImageTop }]}
+        style={[
+          styles.screenBgImage,
+          { width: winW, height: winH },
+          Platform.OS === 'web' ? ({ objectPosition: 'center' } as any) : null,
+        ]}
         resizeMode="cover"
       />
       <ScrollView
@@ -65,77 +65,90 @@ export function HomeMainScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.scrollTopMask}>
-          <View style={styles.webTopRow}>
-            <View style={[styles.card, styles.webTopCol]}>
-              <View style={styles.instructorBlock}>
+          <View style={[styles.topStack, { gap: sectionGap }]}>
+            <View style={styles.webTopRow}>
+              <View style={[styles.card, styles.webTopCol, isWebDesktop && { marginBottom: 0 }]}>
+                <View style={styles.instructorBlock}>
                 <View
-                  style={[styles.instructorSpeechBand, instructorStacked && styles.instructorSpeechBandStacked]}
+                  style={[
+                    styles.instructorSpeechBand,
+                    instructorStacked ? styles.instructorSpeechBandMobile : null,
+                  ]}
                 >
-                  <View style={[styles.avatarColumn, instructorStacked && styles.avatarColumnStacked]}>
-                    <View style={styles.avatarRing}>
-                      <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
-                    </View>
-                  </View>
-                  <View style={[styles.speechArea, instructorStacked && styles.speechAreaStacked]}>
-                    <View style={styles.instructorBody}>
-                      <Text style={styles.roleLabel}>Инструктор</Text>
-                      <Text style={styles.name}>Эдуард Н.</Text>
-                      <View style={styles.instructorMetaBlock}>
-                        <Text style={styles.experienceLine}>Стаж 23 года ·</Text>
-                        <Text style={styles.experienceLine}>Обучение на АКПП</Text>
+                  <View style={[styles.avatarColumn, instructorStacked ? styles.avatarColumnMobile : null]}>
+                      <View style={styles.avatarRing}>
+                        <Image source={INSTRUCTOR_IMG} style={styles.avatar} resizeMode="cover" />
                       </View>
-                      <Text style={styles.phone}>8 903 252-52-32</Text>
+                    </View>
+                  <View
+                    style={[
+                      styles.speechArea,
+                      instructorStacked ? styles.speechAreaMobile : null,
+                    ]}
+                  >
+                      <View style={styles.instructorBody}>
+                        <Text style={styles.roleLabel}>Инструктор</Text>
+                        <Text style={styles.name}>Эдуард Н.</Text>
+                        <View style={styles.instructorMetaBlock}>
+                          <Text style={styles.experienceLine}>Стаж 23 года ·</Text>
+                          <Text style={styles.experienceLine}>Обучение на АКПП</Text>
+                        </View>
+                        <Text style={styles.phone}>8 903 252-52-32</Text>
+                        <Pressable style={styles.instructorCta} onPress={() => navigation.navigate('RegisterRequest')}>
+                          <Text style={styles.instructorCtaText}>Отправить заявку</Text>
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
                 </View>
               </View>
-            </View>
 
-            <View style={[styles.examBanner, styles.webTopCol]}>
-              <View style={styles.examBannerHeader}>
-                <Text style={styles.examTitle}>Полный пакет документов</Text>
-                <View style={styles.examTag}>
-                  <Text style={styles.examTagText}>как у автошколы</Text>
+              <View style={[styles.examBanner, styles.webTopCol, isWebDesktop && { marginBottom: 0 }]}>
+                <View style={styles.examBannerHeader}>
+                  <Text style={styles.examTitle}>Полный пакет документов</Text>
+                  <View style={styles.examTag}>
+                    <Text style={styles.examTagText}>как у автошколы</Text>
+                  </View>
+                </View>
+                <View style={styles.examBulletList}>
+                  {DOC_PACK_BULLETS.map((line, i) => (
+                    <View key={i} style={styles.examBulletRow}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color={colors.success}
+                        style={styles.examBulletIcon}
+                      />
+                      <Text style={styles.examBulletText}>{line}</Text>
+                    </View>
+                  ))}
                 </View>
               </View>
-              <View style={styles.examBulletList}>
-                {DOC_PACK_BULLETS.map((line, i) => (
-                  <View key={i} style={styles.examBulletRow}>
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={22}
-                      color={colors.success}
-                      style={styles.examBulletIcon}
-                    />
-                    <Text style={styles.examBulletText}>{line}</Text>
-                  </View>
-                ))}
-              </View>
             </View>
-          </View>
 
-          <View style={styles.tariffsSection}>
-            <Text style={styles.sectionTitle}>Тарифы</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              nestedScrollEnabled
-              contentContainerStyle={styles.tariffRow}
-              decelerationRate="fast"
-              snapToInterval={tariffCardWidth + 12}
-              snapToAlignment="start"
-              keyboardShouldPersistTaps="handled"
-            >
-              {tariffs.map((t) => (
-                <TariffCard
-                  key={t.id}
-                  tariff={t}
-                  colors={colors}
-                  cardWidth={tariffCardWidth}
-                  onPressCta={() => navigation.navigate('RegisterRequest')}
-                />
-              ))}
-            </ScrollView>
+            <View style={[styles.tariffsSection, { marginBottom: 0 }]}>
+              <Text style={styles.sectionTitle}>Тарифы</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                contentContainerStyle={styles.tariffRow}
+                decelerationRate="fast"
+                snapToInterval={tariffCardWidth + 12}
+                snapToAlignment="start"
+                keyboardShouldPersistTaps="handled"
+              >
+                {tariffs.map((t) => (
+                  <TariffCard
+                    key={t.id}
+                    tariff={t}
+                    colors={colors}
+                    cardWidth={tariffCardWidth}
+                    onPressCta={() => navigation.navigate('RegisterRequest')}
+                  />
+                ))}
+              </ScrollView>
+            </View>
           </View>
         </View>
 
@@ -145,6 +158,7 @@ export function HomeMainScreen() {
             styles.carOverPhoto,
             {
               minHeight: Math.max(winH * 0.58, 400),
+              marginTop: sectionGap,
               paddingBottom: Math.max(insets.bottom, 16) + 8,
             },
           ]}
@@ -168,6 +182,10 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
   const px = (n: number) => Math.round(n * s);
 
   return StyleSheet.create({
+    topStack: {
+      alignSelf: 'stretch',
+      width: '100%',
+    },
     screen: {
       flex: 1,
       position: 'relative',
@@ -176,6 +194,10 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
     screenBgImage: {
       position: 'absolute',
       left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      alignSelf: 'center',
       zIndex: 0,
     },
     scroll: {
@@ -188,8 +210,10 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       flexGrow: 1,
     },
     scrollTopMask: {
-      paddingHorizontal: isWebDesktop ? 24 : 16,
-      paddingTop: isWebDesktop ? 16 : 6,
+      paddingHorizontal: isWebDesktop ? 18 : 12,
+      // Делаем верхний отступ таким же, как межсекционный gap на мобилке,
+      // чтобы расстояние "до первой плашки" совпадало с расстоянием "после неё".
+      paddingTop: isWebDesktop ? 16 : 12,
       backgroundColor: 'transparent',
     },
     webTopRow: {
@@ -206,14 +230,14 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       width: '100%',
       justifyContent: 'flex-start',
       alignItems: 'stretch',
-      paddingHorizontal: isWebDesktop ? 24 : 16,
+      paddingHorizontal: isWebDesktop ? 18 : 12,
       paddingTop: 0,
     },
     card: {
       backgroundColor: colors.surface,
       borderRadius: px(20),
-      paddingVertical: px(22),
-      paddingHorizontal: px(20),
+      paddingVertical: px(18),
+      paddingHorizontal: px(18),
       marginBottom: isWebDesktop ? 18 : 12,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
@@ -222,6 +246,7 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       shadowOpacity: 0.08,
       shadowRadius: 14,
       elevation: 4,
+      ...(isWebDesktop ? ({ alignSelf: 'center', width: '100%', maxWidth: 980 } as const) : null),
     },
     instructorBlock: {
       flexDirection: 'column',
@@ -232,20 +257,19 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       flexDirection: 'row',
       alignItems: 'stretch',
     },
-    instructorSpeechBandStacked: {
-      flexDirection: 'column',
-      alignItems: 'stretch',
+    instructorSpeechBandMobile: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     avatarColumn: {
       justifyContent: 'center',
       alignItems: 'center',
       paddingRight: px(16),
     },
-    avatarColumnStacked: {
-      justifyContent: 'flex-start',
-      alignItems: 'flex-start',
-      paddingRight: 0,
-      marginBottom: 0,
+    avatarColumnMobile: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingRight: px(14),
     },
     speechArea: {
       flex: 1,
@@ -255,11 +279,9 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       justifyContent: 'center',
       backgroundColor: colors.surface,
     },
-    speechAreaStacked: {
-      marginTop: px(16),
+    speechAreaMobile: {
       paddingLeft: 0,
       paddingVertical: 0,
-      width: '100%',
     },
     /** Круглый аватар поменьше. */
     avatarRing: {
@@ -284,6 +306,7 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       justifyContent: 'center',
       flex: 1,
       alignSelf: 'stretch',
+      alignItems: 'flex-start',
       paddingVertical: 4,
       paddingHorizontal: 0,
       backgroundColor: colors.surface,
@@ -297,6 +320,7 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       fontWeight: '600',
       color: colors.textSecondary,
       lineHeight: px(20),
+      textAlign: 'left',
     },
     roleLabel: {
       fontSize: px(12),
@@ -305,6 +329,7 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       marginBottom: px(8),
       letterSpacing: 0.4,
       textTransform: 'uppercase',
+      textAlign: 'left',
     },
     name: {
       fontSize: px(23),
@@ -312,6 +337,7 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       color: colors.text,
       marginBottom: px(6),
       letterSpacing: -0.25,
+      textAlign: 'left',
     },
     phone: {
       fontSize: px(16),
@@ -319,6 +345,28 @@ function createStyles(colors: ThemeColors, isWebDesktop: boolean) {
       color: colors.link,
       marginTop: px(10),
       letterSpacing: 0.2,
+      textAlign: 'left',
+    },
+    instructorCta: {
+      marginTop: px(14),
+      backgroundColor: '#ffffff',
+      borderRadius: px(14),
+      paddingHorizontal: px(16),
+      paddingVertical: px(12),
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: '#0f2133',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    instructorCtaText: {
+      color: colors.link,
+      fontWeight: '800',
+      fontSize: px(14),
+      letterSpacing: 0.2,
+      textAlign: 'center',
     },
     /** Карточка «пакет документов»: иконка + заголовок слева, чип, список с зелёными галочками. */
     examBanner: {

@@ -15,6 +15,7 @@ import { StudentCalendarScreen } from '../screens/student/StudentCalendarScreen'
 import { StudentMyBookingsScreen } from '../screens/student/StudentMyBookingsScreen';
 import { StudentTariffsScreen } from '../screens/student/StudentTariffsScreen';
 import { StudentChatScreen } from '../screens/student/StudentChatScreen';
+import { StudentPddScreen } from '../screens/student/StudentPddScreen';
 import { AdminSlotsScreen } from '../screens/admin/AdminSlotsScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminTariffsScreen } from '../screens/admin/AdminTariffsScreen';
@@ -146,7 +147,7 @@ function AuthNavigator() {
       <AuthStack.Screen
         name="Login"
         component={LoginScreen}
-        options={{ title: 'Вход', headerBackTitle: 'Назад' }}
+        options={{ title: '', headerBackTitle: 'Назад' }}
       />
       <AuthStack.Screen
         name="RegisterRequest"
@@ -258,6 +259,17 @@ function StudentNavigator() {
           tabBarLabel: 'Чат',
           tabBarIcon: ({ color }) => (
             <Ionicons name="chatbubbles-outline" size={studentIconSize} color={color} />
+          ),
+        }}
+      />
+      <StudentTabs.Screen
+        name="Pdd"
+        component={StudentPddScreen}
+        options={{
+          title: 'ПДД',
+          tabBarLabel: 'ПДД',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="book-outline" size={studentIconSize} color={color} />
           ),
         }}
       />

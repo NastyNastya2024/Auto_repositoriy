@@ -59,6 +59,10 @@ type Props = {
   onPressFreeSlot: (slot: Slot) => void;
   onPressOwnPending?: (bookingId: string) => void;
   onPressAdminSlot: (slot: Slot) => void;
+  /** Клик по пустому месту в сетке (например, чтобы открыть шторку создания). */
+  onPressEmptyCell?: (dt: Date) => void;
+  /** Скрыть свободные слоты (показывать только занятые/закрытые). */
+  hideFreeSlots?: boolean;
 };
 
 export function WeekScheduleGrid({
@@ -71,6 +75,8 @@ export function WeekScheduleGrid({
   onPressFreeSlot,
   onPressOwnPending,
   onPressAdminSlot,
+  onPressEmptyCell,
+  hideFreeSlots,
 }: Props) {
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
@@ -81,7 +87,9 @@ export function WeekScheduleGrid({
   const days = getWeekDayDates(weekStartMonday);
 
   const weekSlots = slots.filter((s) => slotOverlapsWeek(s, weekStartMonday));
-  const sorted = [...weekSlots].sort((a, b) => {
+  const shouldHideFree = mode === 'admin' || !!hideFreeSlots;
+  const visibleWeekSlots = shouldHideFree ? weekSlots.filter((s) => s.status !== 'free') : weekSlots;
+  const visibleSorted = [...visibleWeekSlots].sort((a, b) => {
     const pa = slotPaintOrder(a);
     const pb = slotPaintOrder(b);
     if (pa !== pb) return pa - pb;
@@ -122,11 +130,29 @@ export function WeekScheduleGrid({
               <View
                 key={day.toISOString()}
                 style={[styles.dayCol, { width: dayColW, height: GRID_HEIGHT }]}
+                // На web `ScrollView` часто "съедает" onPress у Pressable.
+                // Responder-события работают стабильнее для клика по пустому месту.
+                onStartShouldSetResponder={() => !!onPressEmptyCell}
+                onResponderRelease={(e) => {
+                  if (!onPressEmptyCell) return;
+                  const y = e.nativeEvent.locationY;
+                  const minutesFromGridStart = (y / HOUR_ROW_PX) * 60;
+                  // Округляем до 30 минут, чтобы было удобно выставлять руками.
+                  const snapped = Math.round(minutesFromGridStart / 30) * 30;
+                  const clamped = Math.max(
+                    0,
+                    Math.min(snapped, (GRID_HOUR_END - GRID_HOUR_START + 1) * 60),
+                  );
+                  const dt = new Date(day);
+                  dt.setHours(GRID_HOUR_START, 0, 0, 0);
+                  dt.setMinutes(dt.getMinutes() + clamped);
+                  onPressEmptyCell(dt);
+                }}
               >
                 {HOURS.map((h) => (
                   <View key={h} style={[styles.gridLine, { height: HOUR_ROW_PX }]} />
                 ))}
-                {sorted.map((slot) => {
+                {visibleSorted.map((slot) => {
                   const layout = getSlotLayoutPx(slot, day);
                   if (!layout) return null;
                   const booking = getBookingForSlot(slot.id, bookings);

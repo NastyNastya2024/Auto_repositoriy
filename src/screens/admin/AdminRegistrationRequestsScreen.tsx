@@ -1,8 +1,15 @@
 import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
+
+function confirmWeb(message: string): boolean {
+  if (Platform.OS !== 'web' || typeof globalThis === 'undefined') return false;
+  const win = globalThis as typeof globalThis & { confirm?: (m: string) => boolean };
+  if (typeof win.confirm !== 'function') return false;
+  return win.confirm(message);
+}
 
 export function AdminRegistrationRequestsScreen() {
   const {
@@ -38,23 +45,33 @@ export function AdminRegistrationRequestsScreen() {
           <View style={styles.row}>
             <Pressable
               style={styles.ok}
-              onPress={() =>
+              onPress={() => {
+                const message = `Подтвердить заявку?\nСоздать учётную запись для «${r.login}»?`;
+                if (confirmWeb(message)) {
+                  approveRegistrationRequest(r.id);
+                  return;
+                }
                 Alert.alert('Подтвердить заявку?', `Создать учётную запись для «${r.login}»?`, [
                   { text: 'Отмена', style: 'cancel' },
                   { text: 'Подтвердить', onPress: () => approveRegistrationRequest(r.id) },
-                ])
-              }
+                ]);
+              }}
             >
               <Text style={styles.okText}>Подтвердить</Text>
             </Pressable>
             <Pressable
               style={styles.no}
-              onPress={() =>
+              onPress={() => {
+                const message = `Удалить заявку «${r.login}»?`;
+                if (confirmWeb(message)) {
+                  deleteRegistrationRequest(r.id);
+                  return;
+                }
                 Alert.alert('Удалить заявку?', undefined, [
                   { text: 'Отмена', style: 'cancel' },
                   { text: 'Удалить', style: 'destructive', onPress: () => deleteRegistrationRequest(r.id) },
-                ])
-              }
+                ]);
+              }}
             >
               <Text style={styles.noText}>Удалить</Text>
             </Pressable>
@@ -87,21 +104,27 @@ export function AdminRegistrationRequestsScreen() {
                     );
                     return;
                   }
-                  Alert.alert(
-                    'Закрепить тариф?',
-                    `Назначить ученику «${nameLine}» тариф «${tariff.name}»?`,
-                    [
-                      { text: 'Отмена', style: 'cancel' },
-                      { text: 'Назначить', onPress: () => approveStudentTariffRequest(req.id) },
-                    ],
-                  );
+                  const message = `Закрепить тариф?\nНазначить ученику «${nameLine}» тариф «${tariff.name}»?`;
+                  if (confirmWeb(message)) {
+                    approveStudentTariffRequest(req.id);
+                    return;
+                  }
+                  Alert.alert('Закрепить тариф?', `Назначить ученику «${nameLine}» тариф «${tariff.name}»?`, [
+                    { text: 'Отмена', style: 'cancel' },
+                    { text: 'Назначить', onPress: () => approveStudentTariffRequest(req.id) },
+                  ]);
                 }}
               >
                 <Text style={styles.okText}>Назначить тариф</Text>
               </Pressable>
               <Pressable
                 style={styles.no}
-                onPress={() =>
+                onPress={() => {
+                  const message = `Отклонить заявку на тариф?`;
+                  if (confirmWeb(message)) {
+                    deleteStudentTariffRequest(req.id);
+                    return;
+                  }
                   Alert.alert('Отклонить заявку?', undefined, [
                     { text: 'Отмена', style: 'cancel' },
                     {
@@ -109,8 +132,8 @@ export function AdminRegistrationRequestsScreen() {
                       style: 'destructive',
                       onPress: () => deleteStudentTariffRequest(req.id),
                     },
-                  ])
-                }
+                  ]);
+                }}
               >
                 <Text style={styles.noText}>Отклонить</Text>
               </Pressable>
