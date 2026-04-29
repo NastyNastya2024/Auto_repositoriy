@@ -282,9 +282,26 @@ export function StudentCalendarScreen() {
               <View style={styles.selectedRow}>
                 <View style={styles.selectedCell}>
                   <Text style={styles.selectedLabel}>Дата</Text>
-                  <View style={styles.dateDisplay}>
-                    <Text style={styles.dateDisplayText}>{dateLabelLong}</Text>
-                  </View>
+                  <TextInput
+                    value={dateText}
+                    onChangeText={setDateText}
+                    onBlur={() => {
+                      if (!isValidDateTextDM(dateText)) {
+                        setDateText(dateLabel);
+                        return;
+                      }
+                      const d = applyDateTextDM(pickStart, dateText);
+                      if (!d) {
+                        setDateText(dateLabel);
+                        return;
+                      }
+                      mergeDate(d);
+                    }}
+                    placeholder="ДД.ММ"
+                    style={styles.dateInput}
+                  />
+                  <Text style={styles.dateHint}>ДД — день, ММ — месяц</Text>
+                  <Text style={styles.dateHintExample}>{dateLabelLong}</Text>
                 </View>
                 <View style={styles.selectedCell}>
                   <Text style={styles.selectedLabel}>Время</Text>
@@ -624,15 +641,7 @@ function createStyles(colors: ThemeColors) {
       fontSize: 14,
     },
     dateHint: { marginTop: 8, color: colors.textMuted, fontSize: 12, fontWeight: '700' },
-    dateDisplay: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      paddingHorizontal: 10,
-      paddingVertical: 10,
-      backgroundColor: colors.surface,
-    },
-    dateDisplayText: { color: colors.text, fontWeight: '800', fontSize: 14 },
+    dateHintExample: { marginTop: 6, color: colors.textSecondary, fontSize: 13, fontWeight: '800' },
     timeInput: {
       flex: 1,
       minWidth: 0,
