@@ -191,11 +191,6 @@ export function WelcomeScreen() {
                       // На web-десктопе заголовок не должен переноситься на 2 строки.
                       isWebDesktop ? ({ whiteSpace: 'nowrap' } as any) : null,
                     ]}
-                    numberOfLines={1}
-                    ellipsizeMode="clip"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.72}
-                    maxFontSizeMultiplier={1.35}
                     allowFontScaling={true}
                     {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
                   >
@@ -342,7 +337,8 @@ function createStyles(screenWidth: number, screenHeight: number, isWebDesktop: b
       color: TEXT,
       textAlign: 'center',
       maxWidth: '100%',
-      flexShrink: 0,
+      flexShrink: 1,
+      flexWrap: 'wrap',
       letterSpacing: -0.8,
       lineHeight: Math.round(titleFontSize * 1.08),
       marginBottom: 12,
