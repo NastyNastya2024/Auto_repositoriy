@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -84,6 +85,7 @@ export function AdminSlotsScreen() {
     useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { width: screenWidth } = useWindowDimensions();
   const [weekOffset, setWeekOffset] = useState(0);
   const [modal, setModal] = useState(false);
   const [startAt, setStartAt] = useState(new Date());
@@ -94,6 +96,7 @@ export function AdminSlotsScreen() {
   const [timeToText, setTimeToText] = useState('12:30');
   const [dateText, setDateText] = useState('01.01');
   const isWeb = Platform.OS === 'web';
+  const isWebDesktop = isWeb && screenWidth >= 900;
 
   const weekStartMonday = useMemo(
     () => addWeeks(startOfWeekMonday(new Date()), weekOffset),
@@ -226,10 +229,10 @@ export function AdminSlotsScreen() {
 
       {isWeb ? (
         modal ? (
-          <View style={[styles.webSheetRoot, styles.webOverlay]}>
+          <View style={[isWebDesktop ? styles.webSideSheetRoot : styles.webSheetRoot, styles.webOverlay]}>
             <Pressable style={styles.sheetBackdrop} onPress={() => setModal(false)} />
-            <View style={styles.sheet}>
-              <View style={styles.sheetHandle} />
+            <View style={[styles.sheet, isWebDesktop ? styles.sideSheet : null]}>
+              {isWebDesktop ? null : <View style={styles.sheetHandle} />}
               <View style={styles.sheetHeader}>
                 <Text style={styles.sheetTitle}>Время занятия</Text>
                 <Pressable onPress={() => setModal(false)} hitSlop={12} style={styles.sheetCloseHit}>
@@ -658,6 +661,16 @@ function createStyles(colors: ThemeColors) {
       bottom: 0,
       justifyContent: 'flex-end',
     } as any),
+    webSideSheetRoot: ({
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      justifyContent: 'flex-end',
+    } as any),
     webOverlay: { zIndex: 9999 },
     sheetBackdrop: {
       ...StyleSheet.absoluteFillObject,
@@ -671,6 +684,20 @@ function createStyles(colors: ThemeColors) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
       maxHeight: '92%',
+    },
+    sideSheet: {
+      width: '50%',
+      maxWidth: 560,
+      minWidth: 380,
+      height: '100%',
+      maxHeight: '100%',
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+      borderTopLeftRadius: 18,
+      borderBottomLeftRadius: 18,
+      borderTopWidth: 0,
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.border,
     },
     sheetHandle: {
       alignSelf: 'center',

@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,12 +52,15 @@ function BottomSheetLayout({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { width: screenWidth } = useWindowDimensions();
+  const isWebDesktop = Platform.OS === 'web' && screenWidth >= 900;
   const sheetBody = (
     <>
       <Pressable style={styles.modalBackdrop} onPress={onClose} />
       <View
         style={[
           styles.sheet,
+          isWebDesktop ? styles.sideSheet : null,
           {
             paddingBottom: Math.max(insets.bottom, 16),
             backgroundColor: colors.surface,
@@ -64,7 +68,7 @@ function BottomSheetLayout({
           },
         ]}
       >
-        <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+        {isWebDesktop ? null : <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />}
         <View style={styles.sheetHeader}>
           <Text style={[styles.sheetTitle, { color: colors.text }]}>{title}</Text>
           <Pressable onPress={onClose} hitSlop={12} style={styles.sheetCloseHit}>
@@ -83,13 +87,13 @@ function BottomSheetLayout({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       {keyboard ? (
         <KeyboardAvoidingView
-          style={styles.modalRoot}
+          style={[styles.modalRoot, isWebDesktop ? styles.modalRootSide : null]}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           {sheetBody}
         </KeyboardAvoidingView>
       ) : (
-        <View style={styles.modalRoot}>{sheetBody}</View>
+        <View style={[styles.modalRoot, isWebDesktop ? styles.modalRootSide : null]}>{sheetBody}</View>
       )}
     </Modal>
   );
@@ -499,6 +503,7 @@ function createStyles(colors: ThemeColors) {
     },
     openSheetBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
     modalRoot: { flex: 1, justifyContent: 'flex-end' },
+    modalRootSide: { flexDirection: 'row', alignItems: 'stretch', justifyContent: 'flex-end' },
     modalBackdrop: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: 'rgba(0,0,0,0.45)',
@@ -508,6 +513,20 @@ function createStyles(colors: ThemeColors) {
       borderTopRightRadius: 16,
       borderTopWidth: StyleSheet.hairlineWidth,
       maxHeight: '92%',
+    },
+    sideSheet: {
+      width: '50%',
+      maxWidth: 560,
+      minWidth: 380,
+      height: '100%',
+      maxHeight: '100%',
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
+      borderTopLeftRadius: 16,
+      borderBottomLeftRadius: 16,
+      borderTopWidth: 0,
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.border,
     },
     sheetHandle: {
       alignSelf: 'center',
