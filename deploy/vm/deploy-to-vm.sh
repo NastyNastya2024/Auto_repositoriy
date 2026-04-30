@@ -16,8 +16,10 @@ VM_SSH_KEY="${VM_SSH_KEY:-}"
 VM_SITE_ROOT="${VM_SITE_ROOT:-/var/www/autoschool}"
 
 SSH_OPTS=()
+RSYNC_SSH="ssh"
 if [[ -n "$VM_SSH_KEY" ]]; then
   SSH_OPTS+=("-i" "$VM_SSH_KEY")
+  RSYNC_SSH="ssh -i ${VM_SSH_KEY}"
 fi
 
 echo "Building web..."
@@ -30,7 +32,7 @@ if [[ ! -f "dist/index.html" ]]; then
 fi
 
 echo "Uploading dist/ to ${VM_USER}@${VM_HOST}:${VM_SITE_ROOT} ..."
-rsync -az --delete -e "ssh ${SSH_OPTS[*]}" \
+rsync -az --delete -e "${RSYNC_SSH}" \
   dist/ "${VM_USER}@${VM_HOST}:${VM_SITE_ROOT}/"
 
 echo "Reloading nginx..."
