@@ -138,12 +138,6 @@ export function WelcomeScreen() {
                       // На web-десктопе заголовок не должен переноситься на 2 строки.
                       isWebDesktop ? ({ whiteSpace: 'nowrap' } as any) : null,
                     ]}
-                    // Заголовок должен всегда помещаться целиком, без сокращений и переноса.
-                    numberOfLines={1}
-                    ellipsizeMode="clip"
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.72}
-                    maxFontSizeMultiplier={1.35}
                     allowFontScaling={true}
                     {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
                   >
@@ -168,6 +162,7 @@ export function WelcomeScreen() {
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
                     <Text style={styles.phone}>8 903 252-52-32</Text>
+                    <Text style={styles.routeAddress}>ул Академика Бочвара д 20к2</Text>
                   </View>
                 </View>
 
@@ -217,6 +212,7 @@ export function WelcomeScreen() {
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
                     <Text style={styles.phone}>8 903 252-52-32</Text>
+                    <Text style={styles.routeAddress}>ул Академика Бочвара д 20к2</Text>
                   </View>
                 </View>
 
@@ -468,6 +464,15 @@ function createStyles(screenWidth: number, screenHeight: number, isWebDesktop: b
       color: ACCENT,
       marginBottom: 6,
       letterSpacing: 0.3,
+      textAlign: isWebDesktop ? 'center' : 'left',
+      flexShrink: 1,
+    },
+    routeAddress: {
+      fontSize: isWebDesktop ? 14 : 13,
+      fontWeight: '700',
+      color: MUTED,
+      marginTop: 2,
+      marginBottom: 2,
       textAlign: isWebDesktop ? 'center' : 'left',
       flexShrink: 1,
     },

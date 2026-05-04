@@ -248,7 +248,15 @@ export function StudentCalendarScreen() {
         currentStudentId={sessionUser?.id}
         onPressFreeSlot={openBookModal}
         hideFreeSlots={true}
-        onPressEmptyCell={(dt) => openBookSheet(snapToTemplateSlotStart(dt))}
+        onPressEmptyCell={(dt, durationMin) => {
+          const start = snapToTemplateSlotStart(dt);
+          openBookSheet(start);
+          if (durationMin) {
+            const initialDur = closestAllowedDuration(durationMin, STUDENT_BOOKING_DURATIONS_MIN);
+            setPickDuration(initialDur);
+            setTimeToText(toTimeText(addMinutes(start, initialDur)));
+          }
+        }}
         onPressOwnPending={(bookingId) =>
           Alert.alert('Отмена заявки', 'Отменить запрос?', [
             { text: 'Нет', style: 'cancel' },

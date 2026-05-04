@@ -224,7 +224,17 @@ export function AdminSlotsScreen() {
         mode="admin"
         onPressFreeSlot={() => {}}
         onPressAdminSlot={onPressAdminSlot}
-        onPressEmptyCell={openModalAt}
+        onPressEmptyCell={(dt, durationMin) => {
+          const start = new Date(dt);
+          const end = new Date(start.getTime() + (durationMin ?? 90) * 60_000);
+          openModalAt(start);
+          // openModalAt выставляет start/end на 90 минут — поправим под drag-выбор
+          setStartAt(start);
+          setEndAt(end);
+          setTimeFromText(toInputTimeValue(start));
+          setTimeToText(toInputTimeValue(end));
+          setDateText(`${pad2(start.getDate())}.${pad2(start.getMonth() + 1)}`);
+        }}
       />
 
       {isWeb ? (

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { ThemeColors } from '../theme';
 import { useTheme } from '../context/ThemeContext';
@@ -60,9 +60,15 @@ type Props = {
   onPressOwnPending?: (bookingId: string) => void;
   onPressAdminSlot: (slot: Slot) => void;
   /** Клик по пустому месту в сетке (например, чтобы открыть шторку создания). */
-  onPressEmptyCell?: (dt: Date) => void;
+  onPressEmptyCell?: (dt: Date, durationMin?: number) => void;
   /** Скрыть свободные слоты (показывать только занятые/закрытые). */
   hideFreeSlots?: boolean;
+};
+
+type DragSelection = {
+  dayIso: string;
+  startMin: number;
+  endMin: number;
 };
 
 export function WeekScheduleGrid({
@@ -81,6 +87,8 @@ export function WeekScheduleGrid({
   const { width } = useWindowDimensions();
   const { colors } = useTheme();
   const styles = useMemo(() => createGridStyles(colors), [colors]);
+  const [drag, setDrag] = useState<DragSelection | null>(null);
+  const dragRef = useRef<DragSelection | null>(null);
 
   const timeColW = 36;
   const dayColW = Math.max((width - timeColW - 24) / 7, 40);
@@ -100,6 +108,22 @@ export function WeekScheduleGrid({
     month: 'long',
     year: 'numeric',
   });
+
+  const gridTotalMinutes = (GRID_HOUR_END - GRID_HOUR_START + 1) * 60;
+  const snapMinutes = (yPx: number) => {
+    const minutesFromGridStart = (yPx / HOUR_ROW_PX) * 60;
+    // Округляем до 30 минут, чтобы было удобно выставлять руками.
+    const snapped = Math.round(minutesFromGridStart / 30) * 30;
+    const clamped = Math.max(0, Math.min(snapped, gridTotalMinutes));
+    return clamped;
+  };
+
+  const minutesToDate = (day: Date, minutesFromGridStart: number) => {
+    const dt = new Date(day);
+    dt.setHours(GRID_HOUR_START, 0, 0, 0);
+    dt.setMinutes(dt.getMinutes() + minutesFromGridStart);
+    return dt;
+  };
 
   return (
     <View style={styles.wrap}>
@@ -133,25 +157,54 @@ export function WeekScheduleGrid({
                 // На web `ScrollView` часто "съедает" onPress у Pressable.
                 // Responder-события работают стабильнее для клика по пустому месту.
                 onStartShouldSetResponder={() => !!onPressEmptyCell}
+                onResponderGrant={(e) => {
+                  if (!onPressEmptyCell) return;
+                  const startMin = snapMinutes(e.nativeEvent.locationY);
+                  const next: DragSelection = { dayIso: day.toISOString(), startMin, endMin: startMin };
+                  dragRef.current = next;
+                  setDrag(next);
+                }}
+                onResponderMove={(e) => {
+                  if (!onPressEmptyCell) return;
+                  if (!dragRef.current) return;
+                  const endMin = snapMinutes(e.nativeEvent.locationY);
+                  const next: DragSelection = { ...dragRef.current, endMin };
+                  dragRef.current = next;
+                  setDrag(next);
+                }}
                 onResponderRelease={(e) => {
                   if (!onPressEmptyCell) return;
-                  const y = e.nativeEvent.locationY;
-                  const minutesFromGridStart = (y / HOUR_ROW_PX) * 60;
-                  // Округляем до 30 минут, чтобы было удобно выставлять руками.
-                  const snapped = Math.round(minutesFromGridStart / 30) * 30;
-                  const clamped = Math.max(
-                    0,
-                    Math.min(snapped, (GRID_HOUR_END - GRID_HOUR_START + 1) * 60),
-                  );
-                  const dt = new Date(day);
-                  dt.setHours(GRID_HOUR_START, 0, 0, 0);
-                  dt.setMinutes(dt.getMinutes() + clamped);
-                  onPressEmptyCell(dt);
+                  const cur = dragRef.current;
+                  dragRef.current = null;
+                  setDrag(null);
+                  if (!cur || cur.dayIso !== day.toISOString()) return;
+
+                  const a = Math.min(cur.startMin, cur.endMin);
+                  const b = Math.max(cur.startMin, cur.endMin);
+                  const durationMin = Math.max(30, b - a || 30);
+                  const start = minutesToDate(day, a);
+                  onPressEmptyCell(start, durationMin);
+                }}
+                onResponderTerminate={() => {
+                  dragRef.current = null;
+                  setDrag(null);
                 }}
               >
                 {HOURS.map((h) => (
                   <View key={h} style={[styles.gridLine, { height: HOUR_ROW_PX }]} />
                 ))}
+                {drag && drag.dayIso === day.toISOString() ? (
+                  <View
+                    pointerEvents="none"
+                    style={[
+                      styles.dragSelection,
+                      {
+                        top: (Math.min(drag.startMin, drag.endMin) / 60) * HOUR_ROW_PX,
+                        height: (Math.max(drag.startMin, drag.endMin) - Math.min(drag.startMin, drag.endMin) || 30) / 60 * HOUR_ROW_PX,
+                      },
+                    ]}
+                  />
+                ) : null}
                 {visibleSorted.map((slot) => {
                   const layout = getSlotLayoutPx(slot, day);
                   if (!layout) return null;
@@ -355,6 +408,16 @@ function createGridStyles(colors: ThemeColors) {
     slotTextFree: {
       width: '100%',
       textAlign: 'center',
+    },
+    dragSelection: {
+      position: 'absolute',
+      left: 2,
+      right: 2,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(28, 143, 217, 0.55)',
+      backgroundColor: 'rgba(28, 143, 217, 0.22)',
+      zIndex: 5,
     },
   });
 }
