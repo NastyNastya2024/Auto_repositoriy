@@ -162,7 +162,7 @@ export function WelcomeScreen() {
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
                     <Text style={styles.phone}>8 903 252-52-32</Text>
-                    <Text style={styles.routeAddress}>ул Академика Бочвара д 20к2</Text>
+                    <Text style={styles.routeAddress}>ул Академика Бочвара д 2к2</Text>
                   </View>
                 </View>
 
@@ -212,7 +212,7 @@ export function WelcomeScreen() {
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
                     <Text style={styles.phone}>8 903 252-52-32</Text>
-                    <Text style={styles.routeAddress}>ул Академика Бочвара д 20к2</Text>
+                    <Text style={styles.routeAddress}>ул Академика Бочвара д 2к2</Text>
                   </View>
                 </View>
 
