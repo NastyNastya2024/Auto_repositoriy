@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import type { AuthStackParamList } from '../navigation/types';
 import { lightColors } from '../theme';
 import { applyWebDocumentLightTheme } from '../utils/webDocumentTheme';
@@ -161,8 +162,16 @@ export function WelcomeScreen() {
                     <Text style={styles.roleLabel}>Инструктор</Text>
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
-                    <Text style={styles.phone}>8 903 252-52-32</Text>
-                    <Text style={styles.routeAddress}>ул Академика Бочвара д 2к2</Text>
+                    <View style={styles.infoStack}>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="call-outline" size={16} color={ACCENT} />
+                        <Text style={styles.infoText}>8 903 252-52-32</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="location-outline" size={16} color={MUTED} />
+                        <Text style={styles.infoTextMuted}>ул Академика Бочвара д 2к2</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
@@ -211,8 +220,16 @@ export function WelcomeScreen() {
                     <Text style={styles.roleLabel}>Инструктор</Text>
                     <Text style={styles.name}>Эдуард Н.</Text>
                     <Text style={styles.experience}>Стаж 23 года</Text>
-                    <Text style={styles.phone}>8 903 252-52-32</Text>
-                    <Text style={styles.routeAddress}>ул Академика Бочвара д 2к2</Text>
+                    <View style={styles.infoStack}>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="call-outline" size={16} color={ACCENT} />
+                        <Text style={styles.infoText}>8 903 252-52-32</Text>
+                      </View>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="location-outline" size={16} color={MUTED} />
+                        <Text style={styles.infoTextMuted}>ул Академика Бочвара д 2к2</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
@@ -454,26 +471,23 @@ function createStyles(screenWidth: number, screenHeight: number, isWebDesktop: b
       fontSize: isWebDesktop ? 15 : 15,
       fontWeight: '600',
       color: MUTED,
-      marginBottom: 6,
+      marginBottom: 10,
       textAlign: isWebDesktop ? 'center' : 'left',
       flexShrink: 1,
     },
-    phone: {
+    infoStack: { gap: 8, alignSelf: isWebDesktop ? 'center' : 'flex-start' },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+    infoText: {
       fontSize: isWebDesktop ? 16 : 15,
-      fontWeight: '600',
+      fontWeight: '700',
       color: ACCENT,
-      marginBottom: 6,
-      letterSpacing: 0.3,
-      textAlign: isWebDesktop ? 'center' : 'left',
+      letterSpacing: 0.2,
       flexShrink: 1,
     },
-    routeAddress: {
+    infoTextMuted: {
       fontSize: isWebDesktop ? 14 : 13,
       fontWeight: '700',
       color: MUTED,
-      marginTop: 2,
-      marginBottom: 2,
-      textAlign: isWebDesktop ? 'center' : 'left',
       flexShrink: 1,
     },
     cta: {
