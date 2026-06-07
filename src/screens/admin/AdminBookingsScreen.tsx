@@ -1,14 +1,21 @@
-import { useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
-import { formatSlotDate } from '../../utils/format';
+import { bookingStatusLabel, formatSlotDate } from '../../utils/format';
 
 export function AdminBookingsScreen() {
-  const { state, setBookingStatus } = useApp();
+  const { state, setBookingStatus, refreshStateFromStorage } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshStateFromStorage();
+    }, [refreshStateFromStorage]),
+  );
 
   const rows = useMemo(
     () => [...state.bookings].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -49,7 +56,7 @@ export function AdminBookingsScreen() {
                 'отметки нет'
               )}
             </Text>
-            <Text style={styles.meta}>Статус: {b.status}</Text>
+            <Text style={styles.meta}>Статус: {bookingStatusLabel(b.status)}</Text>
             <View style={styles.row}>
               {b.status === 'pending' && (
                 <>

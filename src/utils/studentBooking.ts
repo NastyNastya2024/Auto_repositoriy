@@ -109,3 +109,71 @@ export function buildStudentBookLessonState(
     },
   };
 }
+
+/**
+ * Админ записывает ученика на выбранное время: слот и заявка сразу в статусе booked.
+ */
+export function buildAdminBookLessonState(
+  s: AppState,
+  studentId: string,
+  rawStart: Date,
+  durationMin: number,
+): BookLessonResult {
+  const user = s.users.find((u) => u.id === studentId);
+  if (!user || user.role !== 'student') {
+    return { ok: false, message: 'Выберите ученика из списка' };
+  }
+  if (user.blocked) {
+    return { ok: false, message: 'Ученик заблокирован' };
+  }
+  if (durationMin <= 0) {
+    return { ok: false, message: 'Недопустимая длительность' };
+  }
+
+  const start = new Date(rawStart);
+  if (!isWithinLessonGridWindow(start, durationMin)) {
+    return {
+      ok: false,
+      message: 'Время и длительность должны умещаться в интервал 11:00–21:30',
+    };
+  }
+
+  const rangeEnd = getSlotEnd(start.toISOString(), durationMin);
+
+  const blocked = s.slots.filter(
+    (sl) => sl.status !== 'free' && slotOverlapsTimeRange(sl, start, rangeEnd),
+  );
+  if (blocked.length > 0) {
+    return { ok: false, message: 'Это время уже занято или закрыто' };
+  }
+
+  const keptSlots = s.slots.filter((sl) => {
+    if (sl.status !== 'free') return true;
+    return !slotOverlapsTimeRange(sl, start, rangeEnd);
+  });
+
+  const newSlotId = createId();
+  const newSlot: Slot = {
+    id: newSlotId,
+    startIso: start.toISOString(),
+    durationMin,
+    status: 'booked',
+  };
+  const booking = {
+    id: createId(),
+    slotId: newSlotId,
+    userId: studentId,
+    tariffId: user.assignedTariffId,
+    status: 'booked' as const,
+    createdAt: new Date().toISOString(),
+  };
+
+  return {
+    ok: true,
+    next: {
+      ...s,
+      slots: [...keptSlots, newSlot],
+      bookings: [...s.bookings, booking],
+    },
+  };
+}

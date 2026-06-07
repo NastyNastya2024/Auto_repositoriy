@@ -1,6 +1,7 @@
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, type Theme } from '@react-navigation/native';
 import { Platform, StyleSheet } from 'react-native';
+import { headerTitleStyle, tabBarLabelStyle } from './utils/typography';
 
 export type ThemeColors = {
   bg: string;
@@ -84,7 +85,7 @@ export function getHeaderOptions() {
   return {
     headerStyle: { backgroundColor: c.bgElevated },
     headerTintColor: c.text,
-    headerTitleStyle: { color: c.text },
+    headerTitleStyle: headerTitleStyle({ color: c.text }),
     headerShadowVisible: false,
   };
 }
@@ -92,16 +93,6 @@ export function getHeaderOptions() {
 export function getTabScreenOptions(): BottomTabNavigationOptions {
   const h = getHeaderOptions();
   const c = lightColors;
-  const tabBarLabelStyle =
-    Platform.OS === 'android'
-      ? ({
-          fontSize: 12,
-          fontWeight: 600,
-          lineHeight: 18,
-          paddingBottom: 0,
-          includeFontPadding: true,
-        } as const)
-      : ({ fontSize: 12, fontWeight: 600, lineHeight: 18, paddingBottom: 0 } as const);
   return {
     ...h,
     tabBarStyle: {
@@ -109,7 +100,8 @@ export function getTabScreenOptions(): BottomTabNavigationOptions {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: c.borderSubtle,
     },
-    tabBarLabelStyle,
+    tabBarLabelStyle: tabBarLabelStyle(),
+    tabBarItemStyle: Platform.OS === 'android' ? { alignItems: 'stretch' as const } : undefined,
     tabBarActiveTintColor: c.primary,
     tabBarInactiveTintColor: c.textMuted,
   };

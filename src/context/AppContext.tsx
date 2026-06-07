@@ -4,11 +4,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState as RNAppState, Platform } from 'react-native';
 import { ADMIN_ID, initialState } from '../data/seed';
-import { loadState, saveState } from '../storage/persist';
+import { loadState, mergeAppStateForSync, saveState } from '../storage/persist';
 import type {
   AppState,
   BookingStatus,
@@ -21,7 +22,7 @@ import type {
 } from '../types';
 import { normalizeLogin } from '../utils/auth';
 import { createId } from '../utils/id';
-import { buildStudentBookLessonState } from '../utils/studentBooking';
+import { buildAdminBookLessonState, buildStudentBookLessonState } from '../utils/studentBooking';
 import {
   TEMPLATE_SLOT_DURATION_MIN,
   getTemplateSlotStartsForDay,
@@ -58,6 +59,15 @@ type AppContextValue = {
    * onSuccess — после успешного применения состояния (закрыть модалку и т.д.).
    */
   bookLessonSlot: (start: Date, durationMin: number, onSuccess?: () => void) => void;
+  /** Админ: записать ученика на выбранное время */
+  adminBookStudentSlot: (
+    studentId: string,
+    start: Date,
+    durationMin: number,
+    onSuccess?: () => void,
+    /** При изменении записи — отменить старую в том же обновлении состояния */
+    cancelBookingId?: string,
+  ) => void;
   cancelBookingByStudent: (bookingId: string) => void;
   /** Ученик: отметить / снять отметку «оплатил» по своей записи */
   setBookingStudentPaid: (bookingId: string, paid: boolean) => void;
@@ -84,6 +94,12 @@ type AppContextValue = {
   sendMessage: (text: string, studentId?: string) => void;
   /** Создать недостающие свободные слоты 11:00–21:30 (90 мин) на выбранной неделе */
   ensureFreeTemplateSlotsForWeek: (weekStartMonday: Date) => void;
+  /** Подтянуть заявки и записи из локального хранилища (другая вкладка / устройство в том же браузере). */
+  refreshStateFromStorage: () => Promise<void>;
+  /** Количество необработанных заявок для бейджа админа. */
+  pendingAdminRequestsCount: number;
+  /** Записи учеников, ожидающие подтверждения. */
+  pendingBookingsCount: number;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -91,6 +107,57 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<AppState>({ ...initialState });
+  const stateRef = useRef(state);
+  const readyRef = useRef(false);
+  const skipSaveRef = useRef(true);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveChainRef = useRef(Promise.resolve());
+  const lastLocalMutationRef = useRef(0);
+  const saveInFlightRef = useRef(false);
+
+  stateRef.current = state;
+  readyRef.current = ready;
+
+  const commitState = useCallback((next: AppState) => {
+    stateRef.current = next;
+    lastLocalMutationRef.current = Date.now();
+    saveInFlightRef.current = true;
+    saveChainRef.current = saveChainRef.current
+      .then(() => saveState(next))
+      .catch(() => {})
+      .finally(() => {
+        saveInFlightRef.current = false;
+      });
+  }, []);
+
+  const flushSave = useCallback(() => {
+    if (!readyRef.current) return;
+    const snapshot = stateRef.current;
+    saveChainRef.current = saveChainRef.current
+      .then(() => saveState(snapshot))
+      .catch(() => {});
+  }, []);
+
+  const scheduleSave = useCallback(() => {
+    if (!readyRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      flushSave();
+    }, 80);
+  }, [flushSave]);
+
+  const refreshStateFromStorage = useCallback(async () => {
+    if (!readyRef.current) return;
+    if (saveInFlightRef.current) return;
+    if (Date.now() - lastLocalMutationRef.current < 2000) return;
+    try {
+      const stored = await loadState();
+      setState((prev) => mergeAppStateForSync(prev, stored));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +165,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const loaded = await loadState();
       if (!cancelled) {
         setState(loaded);
+        stateRef.current = loaded;
         setReady(true);
+        readyRef.current = true;
       }
     })();
     return () => {
@@ -108,8 +177,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    saveState(state);
-  }, [state, ready]);
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false;
+      return;
+    }
+    scheduleSave();
+  }, [state, ready, scheduleSave]);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    const onResume = () => {
+      void refreshStateFromStorage();
+    };
+
+    const sub = RNAppState.addEventListener('change', (next) => {
+      if (next === 'active') onResume();
+    });
+
+    if (Platform.OS === 'web' && typeof document !== 'undefined' && typeof window !== 'undefined') {
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') onResume();
+      };
+      const onStorage = () => {
+        void refreshStateFromStorage();
+      };
+      document.addEventListener('visibilitychange', onVisible);
+      window.addEventListener('storage', onStorage);
+      return () => {
+        sub.remove();
+        document.removeEventListener('visibilitychange', onVisible);
+        window.removeEventListener('storage', onStorage);
+      };
+    }
+
+    return () => sub.remove();
+  }, [ready, refreshStateFromStorage]);
 
   const sessionUser = useMemo(() => {
     if (!state.sessionUserId) return null;
@@ -145,30 +248,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!phone) return 'Укажите мобильный телефон';
       if (!email) return 'Укажите почту';
 
-      let err: string | null = null;
-      setState((s) => {
-        const regs = s.registrationRequests ?? [];
-        if (s.users.some((u) => normalizeLogin(u.login) === l)) {
-          err = 'Такой логин уже занят';
-          return s;
-        }
-        if (regs.some((r) => normalizeLogin(r.login) === l)) {
-          err = 'Заявка с таким логином уже отправлена';
-          return s;
-        }
-        const req = {
-          id: createId(),
-          login: l,
-          password: payload.password,
-          phone,
-          email,
-          createdAt: new Date().toISOString(),
-        };
-        return { ...s, registrationRequests: [...regs, req] };
-      });
-      return err;
+      const s = stateRef.current;
+      const regs = s.registrationRequests ?? [];
+      if (s.users.some((u) => normalizeLogin(u.login) === l)) {
+        return 'Такой логин уже занят';
+      }
+      if (regs.some((r) => normalizeLogin(r.login) === l)) {
+        return 'Заявка с таким логином уже отправлена';
+      }
+
+      const req = {
+        id: createId(),
+        login: l,
+        password: payload.password,
+        phone,
+        email,
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, registrationRequests: [...(prev.registrationRequests ?? []), req] }));
+      queueMicrotask(flushSave);
+      return null;
     },
-    [],
+    [flushSave],
   );
 
   const approveRegistrationRequest = useCallback((requestId: string) => {
@@ -177,10 +278,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!r) return s;
       const l = normalizeLogin(r.login);
       if (s.users.some((u) => normalizeLogin(u.login) === l)) {
-        return {
+        const next = {
           ...s,
           registrationRequests: s.registrationRequests.filter((x) => x.id !== requestId),
         };
+        commitState(next);
+        return next;
       }
       const user: User = {
         id: createId(),
@@ -191,48 +294,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         phone: r.phone,
         email: r.email,
       };
-      return {
+      const next = {
         ...s,
         users: [...s.users, user],
         registrationRequests: s.registrationRequests.filter((x) => x.id !== requestId),
       };
+      commitState(next);
+      return next;
     });
-  }, []);
+  }, [commitState]);
 
   const deleteRegistrationRequest = useCallback((requestId: string) => {
-    setState((s) => ({
-      ...s,
-      registrationRequests: s.registrationRequests.filter((x) => x.id !== requestId),
-    }));
-  }, []);
-
-  const submitStudentTariffRequest = useCallback((tariffId: string): string | null => {
-    let err: string | null = null;
     setState((s) => {
+      const next = {
+        ...s,
+        registrationRequests: s.registrationRequests.filter((x) => x.id !== requestId),
+      };
+      commitState(next);
+      return next;
+    });
+  }, [commitState]);
+
+  const submitStudentTariffRequest = useCallback(
+    (tariffId: string): string | null => {
+      const s = stateRef.current;
       const reqs = s.studentTariffRequests ?? [];
       const uid = s.sessionUserId;
-      if (!uid) {
-        err = 'Войдите в аккаунт';
-        return s;
-      }
+      if (!uid) return 'Войдите в аккаунт';
       const user = s.users.find((u) => u.id === uid);
-      if (!user || user.role !== 'student') {
-        err = 'Доступно только ученикам';
-        return s;
-      }
-      if (user.blocked) {
-        err = 'Аккаунт заблокирован';
-        return s;
-      }
+      if (!user || user.role !== 'student') return 'Доступно только ученикам';
+      if (user.blocked) return 'Аккаунт заблокирован';
       const t = s.tariffs.find((x) => x.id === tariffId);
-      if (!t?.active) {
-        err = 'Тариф недоступен';
-        return s;
-      }
+      if (!t?.active) return 'Тариф недоступен';
       const existingForStudent = reqs.find((r) => r.studentId === uid);
       if (existingForStudent?.tariffId === tariffId) {
-        err = 'Эта заявка уже у администратора. Дождитесь ответа или выберите другой тариф.';
-        return s;
+        return 'Эта заявка уже у администратора. Дождитесь ответа или выберите другой тариф.';
       }
       const req = {
         id: createId(),
@@ -241,10 +337,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
       };
       const withoutThisStudent = reqs.filter((r) => r.studentId !== uid);
-      return { ...s, studentTariffRequests: [...withoutThisStudent, req] };
-    });
-    return err;
-  }, []);
+      setState((prev) => ({
+        ...prev,
+        studentTariffRequests: [...withoutThisStudent, req],
+      }));
+      queueMicrotask(flushSave);
+      return null;
+    },
+    [flushSave],
+  );
 
   const approveStudentTariffRequest = useCallback((requestId: string) => {
     setState((s) => {
@@ -255,24 +356,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!t?.active) return s;
       const student = s.users.find((u) => u.id === r.studentId);
       if (!student || student.role !== 'student') {
-        return { ...s, studentTariffRequests: reqs.filter((x) => x.id !== requestId) };
+        const next = { ...s, studentTariffRequests: reqs.filter((x) => x.id !== requestId) };
+        commitState(next);
+        return next;
       }
-      return {
+      const next = {
         ...s,
         users: s.users.map((u) =>
           u.id === r.studentId ? { ...u, assignedTariffId: r.tariffId } : u,
         ),
         studentTariffRequests: reqs.filter((x) => x.id !== requestId),
       };
+      commitState(next);
+      return next;
     });
-  }, []);
+  }, [commitState]);
 
   const deleteStudentTariffRequest = useCallback((requestId: string) => {
-    setState((s) => ({
-      ...s,
-      studentTariffRequests: (s.studentTariffRequests ?? []).filter((x) => x.id !== requestId),
-    }));
-  }, []);
+    setState((s) => {
+      const next = {
+        ...s,
+        studentTariffRequests: (s.studentTariffRequests ?? []).filter((x) => x.id !== requestId),
+      };
+      commitState(next);
+      return next;
+    });
+  }, [commitState]);
 
   const addSlot = useCallback((start: Date, durationMin: number) => {
     const slot = {
@@ -317,17 +426,57 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeSlot = useCallback((slotId: string) => {
-    setState((s) => ({
-      ...s,
-      slots: s.slots.filter((x) => x.id !== slotId),
-      bookings: s.bookings.filter((b) => b.slotId !== slotId),
-    }));
-  }, []);
+    setState((s) => {
+      const next = {
+        ...s,
+        slots: s.slots.filter((x) => x.id !== slotId),
+        bookings: s.bookings.filter((b) => b.slotId !== slotId),
+      };
+      commitState(next);
+      return next;
+    });
+  }, [commitState]);
 
   const bookLessonSlot = useCallback(
     (rawStart: Date, durationMin: number, onSuccess?: () => void) => {
       setState((s) => {
         const r = buildStudentBookLessonState(s, rawStart, durationMin);
+        if (!r.ok) {
+          queueMicrotask(() => Alert.alert('Запись', r.message));
+          return s;
+        }
+        if (onSuccess) queueMicrotask(onSuccess);
+        return r.next;
+      });
+    },
+    [],
+  );
+
+  const adminBookStudentSlot = useCallback(
+    (
+      studentId: string,
+      rawStart: Date,
+      durationMin: number,
+      onSuccess?: () => void,
+      cancelBookingId?: string,
+    ) => {
+      setState((s) => {
+        let working = s;
+        if (cancelBookingId) {
+          const old = working.bookings.find((x) => x.id === cancelBookingId);
+          if (old && old.status !== 'cancelled') {
+            working = {
+              ...working,
+              bookings: working.bookings.map((x) =>
+                x.id === cancelBookingId ? { ...x, status: 'cancelled' as const } : x,
+              ),
+              slots: working.slots.map((sl) =>
+                sl.id === old.slotId ? { ...sl, status: 'free' as const } : sl,
+              ),
+            };
+          }
+        }
+        const r = buildAdminBookLessonState(working, studentId, rawStart, durationMin);
         if (!r.ok) {
           queueMicrotask(() => Alert.alert('Запись', r.message));
           return s;
@@ -345,7 +494,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!uid) return s;
       const b = s.bookings.find((x) => x.id === bookingId);
       if (!b || b.userId !== uid || b.status !== 'pending') return s;
-      return {
+      const next = {
         ...s,
         bookings: s.bookings.map((x) =>
           x.id === bookingId ? { ...x, status: 'cancelled' as const } : x,
@@ -354,8 +503,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           sl.id === b.slotId ? { ...sl, status: 'free' as const } : sl,
         ),
       };
+      commitState(next);
+      return next;
     });
-  }, []);
+  }, [commitState]);
 
   const setBookingStudentPaid = useCallback((bookingId: string, paid: boolean) => {
     setState((s) => {
@@ -424,13 +575,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           sl.id === b.slotId ? { ...sl, status: 'completed' as const } : sl,
         );
       }
-      return {
+      const next = {
         ...s,
         bookings: s.bookings.map((x) => (x.id === bookingId ? { ...x, status } : x)),
         slots,
       };
+      commitState(next);
+      return next;
     });
-  }, []);
+  }, [commitState]);
 
   const updateSlotStatus = useCallback((slotId: string, status: SlotStatus) => {
     setState((s) => ({
@@ -550,6 +703,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.sessionUserId, state.users],
   );
 
+  const pendingAdminRequestsCount = useMemo(
+    () =>
+      (state.registrationRequests?.length ?? 0) + (state.studentTariffRequests?.length ?? 0),
+    [state.registrationRequests, state.studentTariffRequests],
+  );
+
+  const pendingBookingsCount = useMemo(
+    () => state.bookings.filter((b) => b.status === 'pending').length,
+    [state.bookings],
+  );
+
   const value = useMemo(
     () => ({
       ready,
@@ -568,6 +732,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addBlockedSlot,
       removeSlot,
       bookLessonSlot,
+      adminBookStudentSlot,
       cancelBookingByStudent,
       setBookingStudentPaid,
       setStudentAdminNote,
@@ -581,6 +746,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleBlockUser,
       sendMessage,
       ensureFreeTemplateSlotsForWeek,
+      refreshStateFromStorage,
+      pendingAdminRequestsCount,
+      pendingBookingsCount,
     }),
     [
       ready,
@@ -599,6 +767,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addBlockedSlot,
       removeSlot,
       bookLessonSlot,
+      adminBookStudentSlot,
       cancelBookingByStudent,
       setBookingStudentPaid,
       setStudentAdminNote,
@@ -612,6 +781,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleBlockUser,
       sendMessage,
       ensureFreeTemplateSlotsForWeek,
+      refreshStateFromStorage,
+      pendingAdminRequestsCount,
+      pendingBookingsCount,
     ],
   );
 

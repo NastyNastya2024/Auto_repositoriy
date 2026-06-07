@@ -13,11 +13,13 @@ import {
   View,
 } from 'react-native';
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
+import { ConfirmSheet } from '../../components/ConfirmSheet';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import type { Slot } from '../../types';
 import { STUDENT_BOOKING_DURATIONS_MIN } from '../../utils/studentBooking';
+import { buttonLabelStyle, sheetFooterButtonLayout, sheetFooterLayout } from '../../utils/typography';
 import { addWeeks, snapToTemplateSlotStart, startOfWeekMonday } from '../../utils/weekCalendar';
 
 type PickerKind = 'date' | 'time' | null;
@@ -103,6 +105,7 @@ export function StudentCalendarScreen() {
   const [dateText, setDateText] = useState('01.01');
   const [timeFromText, setTimeFromText] = useState('11:00');
   const [timeToText, setTimeToText] = useState('12:30');
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   const weekStartMonday = useMemo(
     () => addWeeks(startOfWeekMonday(new Date()), weekOffset),
@@ -257,12 +260,7 @@ export function StudentCalendarScreen() {
             setTimeToText(toTimeText(addMinutes(start, initialDur)));
           }
         }}
-        onPressOwnPending={(bookingId) =>
-          Alert.alert('Отмена заявки', 'Отменить запрос?', [
-            { text: 'Нет', style: 'cancel' },
-            { text: 'Да', onPress: () => cancelBookingByStudent(bookingId) },
-          ])
-        }
+        onPressOwnPending={(bookingId) => setCancelBookingId(bookingId)}
         onPressAdminSlot={() => {}}
       />
 
@@ -475,6 +473,18 @@ export function StudentCalendarScreen() {
           </View>
         </Modal>
       )}
+
+      <ConfirmSheet
+        visible={cancelBookingId !== null}
+        title="Отмена заявки"
+        message="Отменить запрос на это время?"
+        confirmLabel="Отменить заявку"
+        destructive
+        onConfirm={() => {
+          if (cancelBookingId) cancelBookingByStudent(cancelBookingId);
+        }}
+        onCancel={() => setCancelBookingId(null)}
+      />
     </ScrollView>
   );
 }
@@ -571,7 +581,7 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       marginBottom: 14,
     },
-    bigBookBtnText: { color: colors.onPrimary, fontWeight: '900', fontSize: 16 },
+    bigBookBtnText: buttonLabelStyle({ color: colors.onPrimary, fontSize: 16 }),
     hint: {
       fontSize: 13,
       color: colors.textMuted,
@@ -714,22 +724,14 @@ function createStyles(colors: ThemeColors) {
     iosDoneText: { color: colors.link, fontWeight: '700' },
     rangeHint: { marginTop: 8, color: colors.textMuted, fontSize: 12, fontWeight: '700' },
     sheetFooter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: 12,
-      paddingTop: 12,
+      ...sheetFooterLayout(),
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.borderSubtle,
     },
     savePrimary: {
-      flex: 1,
+      ...sheetFooterButtonLayout(),
       backgroundColor: colors.primary,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderRadius: 12,
-      alignItems: 'center',
     },
-    savePrimaryText: { color: colors.onPrimary, fontWeight: '800', fontSize: 15 },
+    savePrimaryText: buttonLabelStyle({ color: colors.onPrimary, fontSize: 15 }),
   });
 }

@@ -15,13 +15,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { useApp } from '../../context/AppContext';
 import type { Slot } from '../../types';
-import { formatSlotDate } from '../../utils/format';
+import { bookingStatusLabel, formatSlotDate } from '../../utils/format';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
+import { buttonLabelStyle, sheetFooterButtonLayout, sheetFooterLayout } from '../../utils/typography';
 import {
   addWeeks,
   defaultNewSlotStart,
   getBookingForSlot,
+  slotStatusLabel,
   snapToTemplateSlotStart,
   startOfWeekMonday,
 } from '../../utils/weekCalendar';
@@ -80,9 +82,52 @@ function toInputTimeValue(d: Date) {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
+function StudentPicker({
+  students,
+  selectedId,
+  onSelect,
+  styles,
+}: {
+  students: { id: string; name: string; phone?: string }[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  if (students.length === 0) {
+    return (
+      <Text style={styles.emptyStudents}>
+        Нет учеников. Добавьте их в разделе «Пользователи».
+      </Text>
+    );
+  }
+  return (
+    <View style={styles.studentList}>
+      {students.map((u) => {
+        const on = selectedId === u.id;
+        return (
+          <Pressable
+            key={u.id}
+            style={[styles.studentRow, on ? styles.studentRowOn : null]}
+            onPress={() => onSelect(u.id)}
+          >
+            <Text style={[styles.studentName, on ? styles.studentNameOn : null]}>{u.name}</Text>
+            {u.phone ? <Text style={styles.studentMeta}>{u.phone}</Text> : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export function AdminSlotsScreen() {
-  const { state, addBlockedSlot, removeSlot, setBookingStatus, ensureFreeTemplateSlotsForWeek } =
-    useApp();
+  const {
+    state,
+    addBlockedSlot,
+    adminBookStudentSlot,
+    removeSlot,
+    setBookingStatus,
+    ensureFreeTemplateSlotsForWeek,
+  } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: screenWidth } = useWindowDimensions();
@@ -95,8 +140,20 @@ export function AdminSlotsScreen() {
   const [timeFromText, setTimeFromText] = useState('11:00');
   const [timeToText, setTimeToText] = useState('12:30');
   const [dateText, setDateText] = useState('01.01');
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [actionSlot, setActionSlot] = useState<Slot | null>(null);
+  const [actionConfirm, setActionConfirm] = useState<'cancel-booking' | 'remove-slot' | null>(null);
+  const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const isWeb = Platform.OS === 'web';
   const isWebDesktop = isWeb && screenWidth >= 900;
+
+  const students = useMemo(
+    () =>
+      state.users
+        .filter((u) => u.role === 'student' && !u.blocked)
+        .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+    [state.users],
+  );
 
   const weekStartMonday = useMemo(
     () => addWeeks(startOfWeekMonday(new Date()), weekOffset),
@@ -107,6 +164,15 @@ export function AdminSlotsScreen() {
     ensureFreeTemplateSlotsForWeek(weekStartMonday);
   }, [weekStartMonday, ensureFreeTemplateSlotsForWeek]);
 
+  const resetStudentSelection = () => {
+    setSelectedStudentId(students[0]?.id ?? null);
+  };
+
+  const closeActionSheet = () => {
+    setActionSlot(null);
+    setActionConfirm(null);
+  };
+
   const openModal = () => {
     const start = defaultNewSlotStart();
     const end = new Date(start.getTime() + 90 * 60_000);
@@ -116,6 +182,8 @@ export function AdminSlotsScreen() {
     setTimeToText(toInputTimeValue(end));
     setDateText(`${pad2(start.getDate())}.${pad2(start.getMonth() + 1)}`);
     setPicker(null);
+    setEditingBookingId(null);
+    resetStudentSelection();
     setModal(true);
   };
 
@@ -128,7 +196,58 @@ export function AdminSlotsScreen() {
     setTimeToText(toInputTimeValue(end));
     setDateText(`${pad2(start.getDate())}.${pad2(start.getMonth() + 1)}`);
     setPicker(null);
+    setEditingBookingId(null);
+    resetStudentSelection();
     setModal(true);
+  };
+
+  const openEditBooking = (slot: Slot, bookingId: string, studentId: string) => {
+    const start = new Date(slot.startIso);
+    const end = new Date(start.getTime() + slot.durationMin * 60_000);
+    setStartAt(start);
+    setEndAt(end);
+    setTimeFromText(toInputTimeValue(start));
+    setTimeToText(toInputTimeValue(end));
+    setDateText(`${pad2(start.getDate())}.${pad2(start.getMonth() + 1)}`);
+    setSelectedStudentId(studentId);
+    setEditingBookingId(bookingId);
+    setPicker(null);
+    closeActionSheet();
+    setModal(true);
+  };
+
+  const parseModalRange = () => {
+    const st = applyTimeText(startAt, timeFromText) ?? startAt;
+    const en = applyTimeText(endAt, timeToText) ?? endAt;
+    const dur = Math.round((en.getTime() - st.getTime()) / 60_000);
+    return { st, dur };
+  };
+
+  const submitStudentBooking = () => {
+    const { st, dur } = parseModalRange();
+    if (dur <= 0) {
+      Alert.alert('Время', 'Проверьте, что «До» позже, чем «С».');
+      return;
+    }
+    if (!selectedStudentId) {
+      Alert.alert('Ученик', 'Выберите ученика из списка.');
+      return;
+    }
+    const cancelId = editingBookingId ?? undefined;
+    adminBookStudentSlot(selectedStudentId, st, dur, () => {
+      setModal(false);
+      setEditingBookingId(null);
+    }, cancelId);
+  };
+
+  const submitBlockedTime = () => {
+    const { st, dur } = parseModalRange();
+    if (dur <= 0) {
+      Alert.alert('Время', 'Проверьте, что «До» позже, чем «С».');
+      return;
+    }
+    addBlockedSlot(st, dur);
+    setModal(false);
   };
 
   const mergeDate = (d: Date) => {
@@ -149,60 +268,196 @@ export function AdminSlotsScreen() {
   }, [startAt, endAt]);
 
   const onPressAdminSlot = (slot: Slot) => {
-    const lines = [
+    setActionConfirm(null);
+    setActionSlot(slot);
+  };
+
+  const actionBooking = actionSlot
+    ? getBookingForSlot(actionSlot.id, state.bookings)
+    : undefined;
+  const actionStudent = actionBooking
+    ? state.users.find((u) => u.id === actionBooking.userId)
+    : undefined;
+  const bookingModalTitle = editingBookingId ? 'Изменить запись' : 'Запись ученика';
+  const bookingSubmitLabel = editingBookingId ? 'Сохранить' : 'Записать ученика';
+
+  const renderSlotActionSheet = () => {
+    if (!actionSlot) return null;
+
+    const slot = actionSlot;
+    const booking = actionBooking;
+    const studentName = actionStudent?.name;
+
+    const infoLines = [
       formatSlotDate(slot.startIso),
       `${slot.durationMin} мин`,
-      `Статус: ${slot.status}`,
-    ].join('\n');
+      `Слот: ${slotStatusLabel(slot.status)}`,
+      ...(booking ? [`Запись: ${bookingStatusLabel(booking.status)}`] : []),
+      ...(studentName ? [`Ученик: ${studentName}`] : []),
+    ];
 
-    if (slot.status === 'free' || slot.status === 'blocked') {
-      Alert.alert('Слот', lines, [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: () =>
-            Alert.alert('Удалить?', 'Связанные записи будут удалены.', [
-              { text: 'Нет', style: 'cancel' },
-              { text: 'Да', style: 'destructive', onPress: () => removeSlot(slot.id) },
-            ]),
-        },
-      ]);
-      return;
+    const sheetBody = (
+      <>
+        <Pressable style={styles.sheetBackdrop} onPress={closeActionSheet} />
+        <View style={[styles.sheet, isWebDesktop ? styles.sideSheet : null]}>
+          {isWebDesktop ? null : <View style={styles.sheetHandle} />}
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>
+              {slot.status === 'free'
+                ? 'Свободное время'
+                : slot.status === 'blocked'
+                  ? 'Закрытое время'
+                  : 'Запись'}
+            </Text>
+            <Pressable onPress={closeActionSheet} hitSlop={12} style={styles.sheetCloseHit}>
+              <Text style={styles.sheetClose}>×</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.actionInfo}>
+            {infoLines.map((line) => (
+              <Text key={line} style={styles.actionInfoLine}>
+                {line}
+              </Text>
+            ))}
+          </View>
+
+          {actionConfirm ? (
+            <View style={styles.actionStack}>
+              <Text style={styles.actionConfirmText}>
+                {actionConfirm === 'cancel-booking'
+                  ? 'Отменить запись? Слот снова станет свободным.'
+                  : 'Удалить? Связанные записи будут удалены.'}
+              </Text>
+              <Pressable
+                style={styles.actionBtnDanger}
+                onPress={() => {
+                  if (actionConfirm === 'cancel-booking' && booking) {
+                    setBookingStatus(booking.id, 'cancelled');
+                  } else if (actionConfirm === 'remove-slot') {
+                    removeSlot(slot.id);
+                  }
+                  closeActionSheet();
+                }}
+              >
+                <Text style={styles.actionBtnDangerText}>
+                  {actionConfirm === 'cancel-booking' ? 'Да, отменить' : 'Да, удалить'}
+                </Text>
+              </Pressable>
+              <Pressable style={styles.saveSecondary} onPress={() => setActionConfirm(null)}>
+                <Text style={styles.saveSecondaryText}>Назад</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.actionStack}>
+              {slot.status === 'free' ? (
+                <Pressable
+                  style={styles.savePrimary}
+                  onPress={() => {
+                    closeActionSheet();
+                    openModalAt(new Date(slot.startIso));
+                  }}
+                >
+                  <Text style={styles.savePrimaryText}>Записать ученика</Text>
+                </Pressable>
+              ) : null}
+
+              {slot.status === 'blocked' ? (
+                <Pressable
+                  style={styles.actionBtnDanger}
+                  onPress={() => setActionConfirm('remove-slot')}
+                >
+                  <Text style={styles.actionBtnDangerText}>Удалить закрытие</Text>
+                </Pressable>
+              ) : null}
+
+              {booking && (slot.status === 'pending' || slot.status === 'booked') ? (
+                <>
+                  {booking.status === 'pending' ? (
+                    <Pressable
+                      style={styles.savePrimary}
+                      onPress={() => {
+                        setBookingStatus(booking.id, 'booked');
+                        closeActionSheet();
+                      }}
+                    >
+                      <Text style={styles.savePrimaryText}>Подтвердить запись</Text>
+                    </Pressable>
+                  ) : null}
+                  {booking.status === 'booked' ? (
+                    <Pressable
+                      style={styles.savePrimary}
+                      onPress={() => {
+                        setBookingStatus(booking.id, 'completed');
+                        closeActionSheet();
+                      }}
+                    >
+                      <Text style={styles.savePrimaryText}>Завершить занятие</Text>
+                    </Pressable>
+                  ) : null}
+                  <Pressable
+                    style={styles.saveSecondary}
+                    onPress={() => openEditBooking(slot, booking.id, booking.userId)}
+                  >
+                    <Text style={styles.saveSecondaryText}>Изменить запись</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.actionBtnDanger}
+                    onPress={() => setActionConfirm('cancel-booking')}
+                  >
+                    <Text style={styles.actionBtnDangerText}>Отменить запись</Text>
+                  </Pressable>
+                </>
+              ) : null}
+
+              {slot.status === 'completed' ? (
+                <Pressable
+                  style={styles.actionBtnDanger}
+                  onPress={() => setActionConfirm('remove-slot')}
+                >
+                  <Text style={styles.actionBtnDangerText}>Убрать из календаря</Text>
+                </Pressable>
+              ) : null}
+
+              {!booking && slot.status !== 'free' && slot.status !== 'blocked' ? (
+                <Pressable
+                  style={styles.actionBtnDanger}
+                  onPress={() => setActionConfirm('remove-slot')}
+                >
+                  <Text style={styles.actionBtnDangerText}>Удалить слот</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          )}
+        </View>
+      </>
+    );
+
+    if (isWeb) {
+      return (
+        <View
+          style={[
+            isWebDesktop ? styles.webSideSheetRoot : styles.webSheetRoot,
+            styles.webOverlay,
+          ]}
+        >
+          {sheetBody}
+        </View>
+      );
     }
 
-    const actions: {
-      text: string;
-      style?: 'destructive' | 'cancel';
-      onPress?: () => void;
-    }[] = [{ text: 'Закрыть', style: 'cancel' }];
-
-    const booking = getBookingForSlot(slot.id, state.bookings);
-    if (slot.status === 'booked' && booking) {
-      actions.unshift({
-        text: 'Завершить занятие',
-        onPress: () => setBookingStatus(booking.id, 'completed'),
-      });
-    }
-
-    actions.unshift({
-      text: 'Удалить слот',
-      style: 'destructive',
-      onPress: () =>
-        Alert.alert('Удалить слот?', undefined, [
-          { text: 'Отмена', style: 'cancel' },
-          { text: 'Удалить', style: 'destructive', onPress: () => removeSlot(slot.id) },
-        ]),
-    });
-
-    Alert.alert('Слот', lines, actions);
+    return (
+      <Modal visible animationType="slide" transparent onRequestClose={closeActionSheet}>
+        <View style={styles.sheetRoot}>{sheetBody}</View>
+      </Modal>
+    );
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.actions}>
         <Pressable style={styles.blockBtn} onPress={openModal}>
-          <Text style={styles.blockBtnText}>+ Время занятия</Text>
+          <Text style={styles.blockBtnText}>+ Записать ученика</Text>
         </Pressable>
       </View>
 
@@ -222,7 +477,7 @@ export function AdminSlotsScreen() {
         bookings={state.bookings}
         users={state.users}
         mode="admin"
-        onPressFreeSlot={() => {}}
+        onPressFreeSlot={(slot) => openModalAt(new Date(slot.startIso))}
         onPressAdminSlot={onPressAdminSlot}
         onPressEmptyCell={(dt, durationMin) => {
           const start = new Date(dt);
@@ -244,7 +499,7 @@ export function AdminSlotsScreen() {
             <View style={[styles.sheet, isWebDesktop ? styles.sideSheet : null]}>
               {isWebDesktop ? null : <View style={styles.sheetHandle} />}
               <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>Время занятия</Text>
+                <Text style={styles.sheetTitle}>{bookingModalTitle}</Text>
                 <Pressable onPress={() => setModal(false)} hitSlop={12} style={styles.sheetCloseHit}>
                   <Text style={styles.sheetClose}>×</Text>
                 </Pressable>
@@ -341,26 +596,24 @@ export function AdminSlotsScreen() {
                   </View>
                 </View>
 
+                <Text style={styles.fieldLabel}>Ученик</Text>
+                <StudentPicker
+                  students={students}
+                  selectedId={selectedStudentId}
+                  onSelect={setSelectedStudentId}
+                  styles={styles}
+                />
+
                 <Text style={styles.fieldLabel}>Календарь</Text>
                 <MonthCalendar selected={startAt} onSelectDate={(d) => mergeDate(d)} colors={colors} />
               </ScrollView>
 
               <View style={styles.sheetFooter}>
-                <Pressable
-                  style={styles.savePrimary}
-                  onPress={() => {
-                    const st = applyTimeText(startAt, timeFromText) ?? startAt;
-                    const en = applyTimeText(endAt, timeToText) ?? endAt;
-                    const dur = Math.round((en.getTime() - st.getTime()) / 60_000);
-                    if (dur <= 0) {
-                      Alert.alert('Время', 'Проверьте, что «До» позже, чем «С».');
-                      return;
-                    }
-                    addBlockedSlot(st, dur);
-                    setModal(false);
-                  }}
-                >
-                  <Text style={styles.savePrimaryText}>Забронировать время</Text>
+                <Pressable style={styles.saveSecondary} onPress={submitBlockedTime}>
+                  <Text style={styles.saveSecondaryText}>Закрыть время</Text>
+                </Pressable>
+                <Pressable style={styles.savePrimary} onPress={submitStudentBooking}>
+                  <Text style={styles.savePrimaryText}>{bookingSubmitLabel}</Text>
                 </Pressable>
               </View>
             </View>
@@ -373,9 +626,7 @@ export function AdminSlotsScreen() {
             <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>
-                Время занятия
-              </Text>
+              <Text style={styles.sheetTitle}>{bookingModalTitle}</Text>
               <Pressable onPress={() => setModal(false)} hitSlop={12} style={styles.sheetCloseHit}>
                 <Text style={styles.sheetClose}>×</Text>
               </Pressable>
@@ -472,6 +723,14 @@ export function AdminSlotsScreen() {
                 </View>
               </View>
 
+              <Text style={styles.fieldLabel}>Ученик</Text>
+              <StudentPicker
+                students={students}
+                selectedId={selectedStudentId}
+                onSelect={setSelectedStudentId}
+                styles={styles}
+              />
+
               {/* Календарь сразу виден */}
               <Text style={styles.fieldLabel}>Календарь</Text>
               {Platform.OS === 'web' ? (
@@ -508,27 +767,19 @@ export function AdminSlotsScreen() {
             </ScrollView>
 
             <View style={styles.sheetFooter}>
-              <Pressable
-                style={styles.savePrimary}
-                onPress={() => {
-                  const st = applyTimeText(startAt, timeFromText) ?? startAt;
-                  const en = applyTimeText(endAt, timeToText) ?? endAt;
-                  const dur = Math.round((en.getTime() - st.getTime()) / 60_000);
-                  if (dur <= 0) {
-                    Alert.alert('Время', 'Проверьте, что «До» позже, чем «С».');
-                    return;
-                  }
-                  addBlockedSlot(st, dur);
-                  setModal(false);
-                }}
-              >
-                <Text style={styles.savePrimaryText}>Забронировать время</Text>
+              <Pressable style={styles.saveSecondary} onPress={submitBlockedTime}>
+                <Text style={styles.saveSecondaryText}>Закрыть время</Text>
+              </Pressable>
+              <Pressable style={styles.savePrimary} onPress={submitStudentBooking}>
+                <Text style={styles.savePrimaryText}>{bookingSubmitLabel}</Text>
               </Pressable>
             </View>
           </View>
           </View>
         </Modal>
       )}
+
+      {renderSlotActionSheet()}
     </ScrollView>
   );
 }
@@ -641,7 +892,6 @@ function createStyles(colors: ThemeColors) {
       borderRadius: 10,
       alignItems: 'center',
     },
-    blockBtnText: { color: colors.onPrimary, fontWeight: '700' },
     weekNav: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -777,24 +1027,66 @@ function createStyles(colors: ThemeColors) {
       marginBottom: 12,
     },
     dateBtnText: { fontWeight: '600', color: colors.text },
+    studentList: { gap: 8, marginBottom: 4 },
+    studentRow: {
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    studentRowOn: {
+      borderColor: colors.primary,
+      backgroundColor: colors.chipOn,
+    },
+    studentName: { fontSize: 15, fontWeight: '700', color: colors.text },
+    studentNameOn: { color: colors.primary },
+    studentMeta: { marginTop: 4, fontSize: 12, color: colors.textMuted },
+    emptyStudents: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
     sheetFooter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: 12,
-      paddingTop: 12,
+      ...sheetFooterLayout(),
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.borderSubtle,
     },
-    savePrimary: {
-      flex: 1,
-      backgroundColor: colors.primary,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderRadius: 12,
-      alignItems: 'center',
+    saveSecondary: {
+      ...sheetFooterButtonLayout(),
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
-    savePrimaryText: { color: colors.onPrimary, fontWeight: '800', fontSize: 15 },
+    saveSecondaryText: buttonLabelStyle({ color: colors.text, fontSize: 14 }),
+    savePrimary: {
+      ...sheetFooterButtonLayout(),
+      backgroundColor: colors.primary,
+    },
+    savePrimaryText: buttonLabelStyle({ color: colors.onPrimary, fontSize: 15 }),
+    actionInfo: {
+      marginTop: 4,
+      marginBottom: 8,
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: colors.inputBg,
+      borderWidth: 1,
+      borderColor: colors.borderSubtle,
+    },
+    actionInfoLine: { fontSize: 14, lineHeight: 22, color: colors.text },
+    actionStack: { gap: 10, marginTop: 4, paddingBottom: 8 },
+    actionConfirmText: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    actionBtnDanger: {
+      ...sheetFooterButtonLayout(),
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.dangerBorder,
+    },
+    actionBtnDangerText: buttonLabelStyle({ color: colors.dangerText, fontSize: 15 }),
+    blockBtnText: buttonLabelStyle({ color: colors.onPrimary, fontSize: 15 }),
     iosDone: { alignSelf: 'flex-end', paddingVertical: 8 },
     iosDoneText: { color: colors.link, fontWeight: '700' },
   });

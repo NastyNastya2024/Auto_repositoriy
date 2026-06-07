@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import type { ThemeColors } from '../theme';
 import { useTheme } from '../context/ThemeContext';
 import type { Booking, Slot, User } from '../types';
+import { androidTextStyle } from '../utils/typography';
 import {
   GRID_HOUR_END,
   GRID_HOUR_START,
@@ -12,6 +13,7 @@ import {
   getStudentName,
   getWeekDayDates,
   slotOverlapsWeek,
+  slotStatusLabel,
 } from '../utils/weekCalendar';
 
 const HOURS = Array.from(
@@ -95,8 +97,11 @@ export function WeekScheduleGrid({
   const days = getWeekDayDates(weekStartMonday);
 
   const weekSlots = slots.filter((s) => slotOverlapsWeek(s, weekStartMonday));
-  const shouldHideFree = mode === 'admin' || !!hideFreeSlots;
-  const visibleWeekSlots = shouldHideFree ? weekSlots.filter((s) => s.status !== 'free') : weekSlots;
+  const visibleWeekSlots = weekSlots.filter((s) => {
+    if (hideFreeSlots && s.status === 'free') return false;
+    if (mode === 'admin' && s.status === 'cancelled') return false;
+    return true;
+  });
   const visibleSorted = [...visibleWeekSlots].sort((a, b) => {
     const pa = slotPaintOrder(a);
     const pb = slotPaintOrder(b);
@@ -227,6 +232,10 @@ export function WeekScheduleGrid({
 
                   const onPress = () => {
                     if (mode === 'admin') {
+                      if (slot.status === 'free') {
+                        onPressFreeSlot(slot);
+                        return;
+                      }
                       onPressAdminSlot(slot);
                       return;
                     }
@@ -257,19 +266,22 @@ export function WeekScheduleGrid({
                   ];
 
                   const key = `${slot.id}-${day.getTime()}`;
-                  const textStyle = [styles.slotText, { color: text }];
                   const isFree = slot.status === 'free';
-                  const slotLabel = (
+                  const showFreeLabel = !isFree || layout.height >= 24;
+                  const textStyle = androidTextStyle([
+                    styles.slotText,
+                    { color: text },
+                    isFree ? styles.slotTextFree : styles.slotTextCompact,
+                  ]);
+                  const slotLabel = showFreeLabel ? (
                     <Text
-                      style={[textStyle, isFree && styles.slotTextFree]}
+                      style={textStyle}
                       numberOfLines={isFree ? 1 : 4}
-                      adjustsFontSizeToFit={isFree}
-                      minimumFontScale={isFree ? 0.12 : 1}
-                      ellipsizeMode={isFree ? 'clip' : 'tail'}
+                      ellipsizeMode="tail"
                     >
                       {label}
                     </Text>
-                  );
+                  ) : null;
 
                   const boxStyleWithLayout = [
                     ...boxStyle,
@@ -348,6 +360,14 @@ function slotAppearance(
       label: slot.status === 'pending' ? `${name} (ожид.)` : name,
     };
   }
+  if (slot.status === 'pending' || slot.status === 'booked') {
+    return {
+      bg: colors.primary,
+      border: colors.link,
+      text: '#FFFFFF',
+      label: slot.status === 'pending' ? 'Ожидание' : 'Записано',
+    };
+  }
   if (slot.status === 'completed') {
     return {
       bg: '#d1f4e8',
@@ -356,11 +376,19 @@ function slotAppearance(
       label: 'Завершено',
     };
   }
+  if (slot.status === 'cancelled') {
+    return {
+      bg: colors.surfaceMuted,
+      border: colors.border,
+      text: colors.textMuted,
+      label: 'Отменено',
+    };
+  }
   return {
     bg: colors.surfaceMuted,
     border: colors.border,
     text: colors.text,
-    label: slot.status,
+    label: slotStatusLabel(slot.status),
   };
 }
 
@@ -405,9 +433,11 @@ function createGridStyles(colors: ThemeColors) {
       alignItems: 'stretch',
     },
     slotText: { fontSize: 10, fontWeight: '600' },
+    slotTextCompact: { fontSize: 9 },
     slotTextFree: {
       width: '100%',
       textAlign: 'center',
+      fontSize: 9,
     },
     dragSelection: {
       position: 'absolute',

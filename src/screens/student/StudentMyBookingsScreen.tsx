@@ -1,14 +1,17 @@
-import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ConfirmSheet } from '../../components/ConfirmSheet';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
-import { formatSlotDate } from '../../utils/format';
+import { accountStatusLabel, bookingStatusLabel, formatSlotDate } from '../../utils/format';
+import { buttonLabelStyle } from '../../utils/typography';
 
 export function StudentMyBookingsScreen() {
   const { state, sessionUser, cancelBookingByStudent, setBookingStudentPaid } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   const myBookings = useMemo(() => {
     if (!sessionUser) return [];
@@ -33,6 +36,11 @@ export function StudentMyBookingsScreen() {
       <Text style={styles.lead}>
         Расписание ваших занятий. Статус записи и оплату можно отметить ниже.
       </Text>
+      {sessionUser ? (
+        <Text style={styles.accountStatus}>
+          Статус аккаунта: {accountStatusLabel(sessionUser.blocked)}
+        </Text>
+      ) : null}
       {myBookings.length === 0 && <Text style={styles.muted}>Пока нет занятий</Text>}
       {myBookings.map((item) => {
         const slot = state.slots.find((s) => s.id === item.slotId);
@@ -47,7 +55,7 @@ export function StudentMyBookingsScreen() {
                 Пакет: {tariff.name} — {tariff.priceRub.toLocaleString('ru-RU')} ₽
               </Text>
             )}
-            <Text style={styles.status}>Статус: {item.status}</Text>
+            <Text style={styles.status}>Статус: {bookingStatusLabel(item.status)}</Text>
             {item.status !== 'cancelled' && (
               <View style={styles.paidRow}>
                 <Text style={styles.paidLabel}>Оплатил</Text>
@@ -62,12 +70,7 @@ export function StudentMyBookingsScreen() {
             {item.status === 'pending' && (
               <Pressable
                 style={({ pressed }) => [styles.link, pressed && { opacity: 0.8 }]}
-                onPress={() =>
-                  Alert.alert('Отмена заявки', 'Отменить запрос на этот слот?', [
-                    { text: 'Нет', style: 'cancel' },
-                    { text: 'Да', onPress: () => cancelBookingByStudent(item.id) },
-                  ])
-                }
+                onPress={() => setCancelBookingId(item.id)}
               >
                 <Text style={styles.linkText}>Отменить заявку</Text>
               </Pressable>
@@ -75,6 +78,17 @@ export function StudentMyBookingsScreen() {
           </View>
         );
       })}
+      <ConfirmSheet
+        visible={cancelBookingId !== null}
+        title="Отмена заявки"
+        message="Отменить запрос на этот слот?"
+        confirmLabel="Отменить заявку"
+        destructive
+        onConfirm={() => {
+          if (cancelBookingId) cancelBookingByStudent(cancelBookingId);
+        }}
+        onCancel={() => setCancelBookingId(null)}
+      />
     </ScrollView>
   );
 }
@@ -83,7 +97,13 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, paddingBottom: 32 },
-    lead: { fontSize: 14, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+    lead: { fontSize: 14, color: colors.textSecondary, marginBottom: 8, lineHeight: 20 },
+    accountStatus: buttonLabelStyle({
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 12,
+    }),
     muted: { color: colors.textMuted, marginBottom: 8 },
     card: {
       backgroundColor: colors.surface,
@@ -95,7 +115,7 @@ function createStyles(colors: ThemeColors) {
     },
     cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text },
     tariffLine: { marginTop: 6, fontSize: 14, color: colors.textSecondary },
-    status: { marginTop: 4, color: colors.textSecondary },
+    status: buttonLabelStyle({ marginTop: 4, color: colors.textSecondary, fontSize: 14, fontWeight: '500' }),
     paidRow: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import { androidTextStyle, tabBarLabelStyle } from '../utils/typography';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterRequestScreen } from '../screens/RegisterRequestScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
@@ -39,17 +40,17 @@ function adminTabBarLabel(title: string) {
   return function AdminTabBarLabel({ color }: { color: string }) {
     return (
       <Text
-        style={{
-          color,
-          fontSize: 11,
-          fontWeight: '600',
-          textAlign: 'center',
-          lineHeight: 14,
-          marginTop: 2,
-          paddingHorizontal: 1,
-        }}
+        style={androidTextStyle([
+          tabBarLabelStyle({
+            fontSize: Platform.OS === 'web' ? 12 : 11,
+            lineHeight: Platform.OS === 'web' ? 16 : 14,
+            marginTop: 2,
+            paddingHorizontal: 2,
+          }),
+          { color },
+        ])}
         numberOfLines={2}
-        ellipsizeMode="clip"
+        ellipsizeMode="tail"
       >
         {title}
       </Text>
@@ -283,7 +284,13 @@ const STUDENT_TAB_ICON = 22;
 /** Зона под иконку + двухстрочную подпись (высота без учёта safe area снизу). */
 const ADMIN_TAB_BAR_INNER = 58;
 
+function tabBadge(count: number): string | number | undefined {
+  if (count <= 0) return undefined;
+  return count > 9 ? '9+' : count;
+}
+
 function AdminNavigator() {
+  const { pendingAdminRequestsCount, pendingBookingsCount } = useApp();
   const { tabScreenOptions } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -322,8 +329,8 @@ function AdminNavigator() {
         name="Slots"
         component={AdminSlotsScreen}
         options={{
-          title: 'Слоты',
-          tabBarLabel: adminTabBarLabel('Слоты'),
+          title: 'Календарь',
+          tabBarLabel: adminTabBarLabel('Календарь'),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
             <Ionicons name="calendar-outline" size={adminIconSize} color={color} />
@@ -336,6 +343,7 @@ function AdminNavigator() {
         options={{
           title: 'Записи',
           tabBarLabel: adminTabBarLabel('Записи'),
+          tabBarBadge: tabBadge(pendingBookingsCount),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
             <Ionicons name="clipboard-outline" size={adminIconSize} color={color} />
@@ -360,6 +368,7 @@ function AdminNavigator() {
         options={{
           title: 'Заявки',
           tabBarLabel: adminTabBarLabel('Заявки'),
+          tabBarBadge: tabBadge(pendingAdminRequestsCount),
           headerRight: () => <SessionHeaderRight />,
           tabBarIcon: ({ color }) => (
             <Ionicons name="mail-unread-outline" size={adminIconSize} color={color} />

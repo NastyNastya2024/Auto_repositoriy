@@ -1,4 +1,23 @@
-import type { Booking, Slot, User } from '../types';
+import type { Booking, Slot, SlotStatus, User } from '../types';
+
+export function slotStatusLabel(status: SlotStatus): string {
+  switch (status) {
+    case 'free':
+      return 'Свободно';
+    case 'blocked':
+      return 'Закрыто';
+    case 'pending':
+      return 'Ожидание';
+    case 'booked':
+      return 'Записано';
+    case 'completed':
+      return 'Завершено';
+    case 'cancelled':
+      return 'Отменено';
+    default:
+      return status;
+  }
+}
 
 /** Сетка календаря: с 11:00 до 22:00 (последний слот 20:00–21:30) */
 export const GRID_HOUR_START = 11;

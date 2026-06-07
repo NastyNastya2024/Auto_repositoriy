@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { accountStatusLabel } from '../../utils/format';
+import { buttonLabelStyle } from '../../utils/typography';
 import { useTheme } from '../../context/ThemeContext';
 import { ADMIN_ID } from '../../data/seed';
 import type { ThemeColors } from '../../theme';
@@ -180,8 +182,8 @@ export function AdminUsersScreen() {
                 </Text>
                 <Text style={styles.listRowSub} numberOfLines={1}>
                   {currentTariff
-                    ? `${currentTariff.name} · ${u.blocked ? 'заблокирован' : 'активен'}`
-                    : `${u.blocked ? 'Заблокирован' : 'Активен'} · тариф не назначен`}
+                    ? `${currentTariff.name} · ${accountStatusLabel(u.blocked)}`
+                    : `${accountStatusLabel(u.blocked)} · тариф не назначен`}
                 </Text>
               </View>
               <Text style={styles.listRowChevron}>›</Text>
@@ -351,7 +353,7 @@ export function AdminUsersScreen() {
                               u.blocked ? styles.statusPillTextBlocked : styles.statusPillTextOk,
                             ]}
                           >
-                            {u.blocked ? 'Заблокирован' : 'Активен'}
+                            {accountStatusLabel(u.blocked)}
                           </Text>
                         </View>
                       </View>
@@ -588,7 +590,7 @@ function createStyles(colors: ThemeColors) {
     },
     statusPillOk: { backgroundColor: colors.chip },
     statusPillBlocked: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.dangerBorder },
-    statusPillText: { fontSize: 14, fontWeight: '600' },
+    statusPillText: buttonLabelStyle({ fontSize: 14, fontWeight: '600' }),
     statusPillTextOk: { color: colors.success },
     statusPillTextBlocked: { color: colors.dangerText },
     detailBody: {

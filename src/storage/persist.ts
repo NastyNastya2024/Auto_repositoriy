@@ -2,8 +2,38 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AppState, RegistrationRequest, Tariff, User } from '../types';
 import { ADMIN_ID, ADMIN_LOGIN, ADMIN_PASSWORD, initialState } from '../data/seed';
 
-const KEY = 'driving-school-local-v3';
+export const STORAGE_KEY = 'driving-school-local-v3';
+const KEY = STORAGE_KEY;
 const LEGACY_KEY_V2 = 'driving-school-local-v2';
+
+
+/** При конфликте id побеждает локальная сессия (отмены и правки не затираются старым storage). */
+function mergeByIdPreferLocal<T extends { id: string }>(local: T[], stored: T[]): T[] {
+  const map = new Map<string, T>();
+  for (const x of stored) map.set(x.id, x);
+  for (const x of local) map.set(x.id, x);
+  return [...map.values()];
+}
+
+/** Объединяет данные из памяти и хранилища (другая вкладка / отложенное сохранение). */
+export function mergeAppStateForSync(memory: AppState, stored: AppState): AppState {
+  return {
+    ...stored,
+    version: 3,
+    sessionUserId: memory.sessionUserId,
+    users: mergeByIdPreferLocal(memory.users, stored.users),
+    registrationRequests: mergeByIdPreferLocal(memory.registrationRequests, stored.registrationRequests),
+    studentTariffRequests: mergeByIdPreferLocal(
+      memory.studentTariffRequests ?? [],
+      stored.studentTariffRequests ?? [],
+    ),
+    slots: mergeByIdPreferLocal(memory.slots, stored.slots),
+    bookings: mergeByIdPreferLocal(memory.bookings, stored.bookings),
+    tariffs: mergeTariffsFromSeed(stored.tariffs, initialState.tariffs),
+    messages: mergeByIdPreferLocal(memory.messages, stored.messages),
+    payments: mergeByIdPreferLocal(memory.payments, stored.payments),
+  };
+}
 
 /** Подмешивает новые тарифы из seed; сохранённые по id поля остаются (цена и т.д. с правками пользователя). */
 function mergeTariffsFromSeed(stored: unknown, seed: Tariff[]): Tariff[] {
@@ -55,8 +85,12 @@ function migrateV1ToV2(raw: Record<string, unknown>): AppState {
     version: 3,
     sessionUserId: (raw.sessionUserId as string | null) ?? null,
     users,
-    registrationRequests: [] as RegistrationRequest[],
-    studentTariffRequests: [],
+    registrationRequests: Array.isArray(raw.registrationRequests)
+      ? (raw.registrationRequests as RegistrationRequest[])
+      : [],
+    studentTariffRequests: Array.isArray(raw.studentTariffRequests)
+      ? (raw.studentTariffRequests as AppState['studentTariffRequests'])
+      : [],
     slots: Array.isArray(raw.slots) ? raw.slots : initialState.slots,
     bookings: Array.isArray(raw.bookings) ? raw.bookings : [],
     tariffs: initialState.tariffs,
@@ -67,6 +101,10 @@ function migrateV1ToV2(raw: Record<string, unknown>): AppState {
 
 function normalize(raw: Record<string, unknown> | null): AppState {
   if (!raw) return { ...initialState };
+
+  if (raw.version === undefined || raw.version === null) {
+    return normalize({ ...raw, version: 3 });
+  }
 
   if (raw.version === 1) {
     return migrateV1ToV2(raw);
