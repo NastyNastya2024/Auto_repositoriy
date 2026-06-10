@@ -1,8 +1,8 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ConfirmSheet } from '../../components/ConfirmSheet';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import { buttonLabelStyle } from '../../utils/typography';
@@ -29,8 +29,8 @@ export function AdminRegistrationRequestsScreen() {
     deleteRegistrationRequest,
     approveStudentTariffRequest,
     deleteStudentTariffRequest,
-    refreshStateFromStorage,
   } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
@@ -43,12 +43,6 @@ export function AdminRegistrationRequestsScreen() {
     }
     setPendingConfirm(cfg);
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshStateFromStorage();
-    }, [refreshStateFromStorage]),
-  );
 
   const regList = [...(state.registrationRequests ?? [])].sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),

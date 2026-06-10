@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import { formatRub } from '../../utils/format';
@@ -22,6 +23,7 @@ function runAfterTariffRequestConfirm(name: string, onSend: () => void) {
 
 export function StudentTariffsScreen() {
   const { state, sessionUser, submitStudentTariffRequest } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const tariffs = state.tariffs.filter((t) => t.active);
@@ -79,8 +81,8 @@ export function StudentTariffsScreen() {
                   Alert.alert('Вход', 'Войдите в аккаунт под учеником, затем откройте раздел «Тарифы».');
                   return;
                 }
-                runAfterTariffRequestConfirm(item.name, () => {
-                  const err = submitStudentTariffRequest(item.id);
+                runAfterTariffRequestConfirm(item.name, async () => {
+                  const err = await submitStudentTariffRequest(item.id);
                   if (err) {
                     Alert.alert('Заявка', err);
                     return;

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { accountStatusLabel } from '../../utils/format';
 import { buttonLabelStyle } from '../../utils/typography';
 import { useTheme } from '../../context/ThemeContext';
@@ -104,6 +105,7 @@ function BottomSheetLayout({
 export function AdminUsersScreen() {
   const { state, addUser, removeUser, toggleBlockUser, setStudentAdminNote, setStudentAssignedTariff } =
     useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [addStudentOpen, setAddStudentOpen] = useState(false);
@@ -139,8 +141,8 @@ export function AdminUsersScreen() {
 
   const closeAddStudentSheet = () => setAddStudentOpen(false);
 
-  const submitNewStudent = () => {
-    const err = addUser({
+  const submitNewStudent = async () => {
+    const err = await addUser({
       name: name || 'Ученик',
       login,
       password,

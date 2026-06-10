@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { Tariff, TariffType } from '../../types';
 import type { ThemeColors } from '../../theme';
@@ -20,6 +21,7 @@ const TYPES: TariffType[] = ['trial', 'route', 'package', 'full', 'after_exam'];
 
 export function AdminTariffsScreen() {
   const { state, upsertTariff, removeTariff } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [open, setOpen] = useState(false);

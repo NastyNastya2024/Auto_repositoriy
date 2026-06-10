@@ -62,7 +62,7 @@ function LogoutHeaderButton() {
   const { logout } = useApp();
   const { colors } = useTheme();
   return (
-    <Pressable onPress={logout} hitSlop={12}>
+    <Pressable onPress={() => void logout()} hitSlop={12}>
       <Text style={{ color: colors.link, fontWeight: '600', fontSize: 16 }}>Выйти</Text>
     </Pressable>
   );

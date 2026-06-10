@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
+import { ServerStatusBanner } from './src/components/ServerStatusBanner';
 import { AppProvider } from './src/context/AppContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -27,6 +28,7 @@ function ThemedShell() {
 
   return (
     <>
+      <ServerStatusBanner />
       <RootNavigator />
       <StatusBar style="dark" />
     </>

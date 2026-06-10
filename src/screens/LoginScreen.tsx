@@ -55,8 +55,8 @@ export function LoginScreen() {
     });
   }, [navigation, colors.link]);
 
-  const onSubmit = () => {
-    const err = loginWithCredentials(login, password);
+  const onSubmit = async () => {
+    const err = await loginWithCredentials(login, password);
     if (err) Alert.alert('Вход', err);
   };
 
@@ -68,8 +68,7 @@ export function LoginScreen() {
       <View style={styles.inner}>
         <Text style={styles.title}>Авторизация</Text>
         <Text style={styles.sub}>
-          Данные хранятся только на этом устройстве. Роль определяется учётной записью: админ или
-          ученик.
+          Роль определяется учётной записью: админ или ученик. Данные синхронизируются с сервером.
         </Text>
 
         <TextInput

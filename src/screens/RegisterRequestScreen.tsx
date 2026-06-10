@@ -39,9 +39,9 @@ export function RegisterRequestScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     try {
-      const err = submitRegistrationRequest({ login, password, phone, email });
+      const err = await submitRegistrationRequest({ login, password, phone, email });
       if (err) {
         if (!webAlert(`Заявка\n\n${err}`)) {
           Alert.alert('Заявка не отправлена', err);

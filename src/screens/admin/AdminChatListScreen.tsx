@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { AdminChatStackParamList } from '../../navigation/types';
 import type { ThemeColors } from '../../theme';
@@ -11,6 +12,7 @@ type Nav = NativeStackNavigationProp<AdminChatStackParamList, 'ChatList'>;
 
 export function AdminChatListScreen() {
   const { state } = useApp();
+  useServerRefreshOnFocus();
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);

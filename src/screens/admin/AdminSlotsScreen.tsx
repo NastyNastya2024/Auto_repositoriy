@@ -14,6 +14,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import type { Slot } from '../../types';
 import { bookingStatusLabel, formatSlotDate } from '../../utils/format';
 import { useTheme } from '../../context/ThemeContext';
@@ -128,6 +129,7 @@ export function AdminSlotsScreen() {
     setBookingStatus,
     ensureFreeTemplateSlotsForWeek,
   } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: screenWidth } = useWindowDimensions();
@@ -477,6 +479,7 @@ export function AdminSlotsScreen() {
         bookings={state.bookings}
         users={state.users}
         mode="admin"
+        hideFreeSlots
         onPressFreeSlot={(slot) => openModalAt(new Date(slot.startIso))}
         onPressAdminSlot={onPressAdminSlot}
         onPressEmptyCell={(dt, durationMin) => {

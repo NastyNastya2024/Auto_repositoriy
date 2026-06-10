@@ -13,6 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
 import { ChatMessageRow } from '../../components/ChatMessageRow';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { AdminChatStackParamList } from '../../navigation/types';
 import type { ThemeColors } from '../../theme';
@@ -23,6 +24,7 @@ export function AdminChatThreadScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { studentId, studentName } = route.params;
   const { state, sessionUser, sendMessage } = useApp();
+  useServerRefreshOnFocus();
   const [text, setText] = useState('');
   const listRef = useRef<FlatList>(null);
 

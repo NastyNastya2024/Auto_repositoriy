@@ -2,11 +2,13 @@ import { useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ChatMessageRow } from '../../components/ChatMessageRow';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 
 export function StudentChatScreen() {
   const { state, sessionUser, sendMessage } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [text, setText] = useState('');

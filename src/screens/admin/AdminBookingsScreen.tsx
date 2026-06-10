@@ -1,21 +1,16 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { tariffTypeLabel, useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import { bookingStatusLabel, formatSlotDate } from '../../utils/format';
 
 export function AdminBookingsScreen() {
-  const { state, setBookingStatus, refreshStateFromStorage } = useApp();
+  const { state, setBookingStatus } = useApp();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshStateFromStorage();
-    }, [refreshStateFromStorage]),
-  );
+  useServerRefreshOnFocus();
 
   const rows = useMemo(
     () => [...state.bookings].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),

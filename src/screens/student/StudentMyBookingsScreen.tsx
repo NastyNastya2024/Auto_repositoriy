@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { ConfirmSheet } from '../../components/ConfirmSheet';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import { accountStatusLabel, bookingStatusLabel, formatSlotDate } from '../../utils/format';
@@ -9,6 +10,7 @@ import { buttonLabelStyle } from '../../utils/typography';
 
 export function StudentMyBookingsScreen() {
   const { state, sessionUser, cancelBookingByStudent, setBookingStudentPaid } = useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);

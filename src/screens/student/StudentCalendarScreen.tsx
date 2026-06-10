@@ -15,6 +15,7 @@ import {
 import { WeekScheduleGrid } from '../../components/WeekScheduleGrid';
 import { ConfirmSheet } from '../../components/ConfirmSheet';
 import { useApp } from '../../context/AppContext';
+import { useServerRefreshOnFocus } from '../../hooks/useServerRefreshOnFocus';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeColors } from '../../theme';
 import type { Slot } from '../../types';
@@ -92,6 +93,7 @@ function closestAllowedDuration(target: number, allowed: readonly number[]): num
 export function StudentCalendarScreen() {
   const { state, sessionUser, bookLessonSlot, cancelBookingByStudent, ensureFreeTemplateSlotsForWeek } =
     useApp();
+  useServerRefreshOnFocus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: screenWidth } = useWindowDimensions();
@@ -265,9 +267,9 @@ export function StudentCalendarScreen() {
       />
 
       <Text style={styles.hint}>
-        Нажмите свободное окно. В форме записи можно изменить дату, время начала и длительность
-        (11:00–21:30). Светло-голубое в сетке — свободно. Запись возможна только если
-        администратор закрепил за вами тариф.
+        Нажмите свободное окно в сетке. В форме записи можно изменить дату, время начала и
+        длительность (11:00–21:30). Запись возможна только если администратор закрепил за вами
+        тариф.
       </Text>
 
       {isWeb && bookTarget ? (
