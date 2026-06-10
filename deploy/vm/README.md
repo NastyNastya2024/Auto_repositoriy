@@ -23,13 +23,21 @@ The website root will be:
 
 ## 3) Deploy from your local machine
 
-From the repo root on your local machine:
+Run this on your **local Mac**, not inside the SSH session on the VM.
+
+For Yandex Cloud VMs with OS Login enabled:
 
 ```bash
-VM_HOST=<YOUR_VM_IP> VM_USER=<YOUR_VM_USER> bash deploy/vm/deploy-to-vm.sh
+VM_HOST=<YOUR_VM_IP> VM_USER=<YOUR_OS_LOGIN_USER> VM_OS_LOGIN=<YOUR_OS_LOGIN_USER> bash deploy/vm/deploy-to-vm.sh
 ```
 
-If you need to specify a key:
+Example:
+
+```bash
+VM_HOST=89.169.162.106 VM_USER=eduardnuzhdin VM_OS_LOGIN=eduardnuzhdin bash deploy/vm/deploy-to-vm.sh
+```
+
+If you use a regular SSH key instead of OS Login:
 
 ```bash
 VM_HOST=<YOUR_VM_IP> VM_USER=<YOUR_VM_USER> VM_SSH_KEY=~/.ssh/id_ed25519 bash deploy/vm/deploy-to-vm.sh
